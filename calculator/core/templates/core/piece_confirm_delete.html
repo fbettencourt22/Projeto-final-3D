@@ -1,10 +1,10 @@
 ﻿{% extends "base.html" %}
-{% block title %}Apagar peca{% endblock %}
+{% block title %}Apagar peça{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-body text-center">
-        <h1 class="h4">Apagar peca</h1>
-        <p class="mt-3">Tens a certeza que queres remover <strong>{% if piece.name %}{{ piece.name }}{% else %}Peca #{{ piece.pk }}{% endif %}</strong>?</p>
+        <h1 class="h4">Apagar peça</h1>
+        <p class="mt-3">Tens a certeza que queres remover <strong>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</strong>?</p>
         <form method="post" class="d-flex justify-content-center gap-2">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Apagar</button>

@@ -10,7 +10,7 @@ class PrintJob(models.Model):
         null=True,
         blank=True,
     )
-    name = models.CharField("Nome da peca", max_length=100, blank=True)
+    name = models.CharField("Nome da peça", max_length=100, blank=True)
     filament_price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)
     filament_weight_g = models.DecimalField(max_digits=10, decimal_places=2)
     print_time_hours = models.DecimalField(max_digits=10, decimal_places=2)
@@ -33,4 +33,4 @@ class PrintJob(models.Model):
     def __str__(self) -> str:  # pragma: no cover
         if self.name:
             return self.name
-        return f"Peca #{self.pk}"
+        return f"Peça #{self.pk}"

@@ -1,9 +1,9 @@
 ﻿{% extends "base.html" %}
-{% block title %}Historico de pecas{% endblock %}
+{% block title %}Listagem de pe&ccedil;as{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-body">
-        <h1 class="h3 mb-4">Pecas registadas</h1>
+        <h1 class="h3 mb-4">Pe&ccedil;as registadas</h1>
         <div class="mb-3">
             <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar a calculadora</a>
         </div>
@@ -12,7 +12,7 @@
                 <table class="table table-striped align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Peca</th>
+                            <th>Pe&ccedil;a</th>
                             <th>Filamento (g)</th>
                             <th>Tempo (h)</th>
                             <th>Margem (%)</th>
@@ -32,7 +32,7 @@
                     <tbody>
                         {% for piece in pieces %}
                             <tr>
-                                <td>{% if piece.name %}{{ piece.name }}{% else %}Peca #{{ piece.pk }}{% endif %}</td>
+                                <td>{% if piece.name %}{{ piece.name }}{% else %}Pe&ccedil;a #{{ piece.pk }}{% endif %}</td>
                                 <td>{{ piece.filament_weight_g }}</td>
                                 <td>{{ piece.print_time_hours }}</td>
                                 <td>{{ piece.margin_percentage }}</td>
@@ -62,7 +62,7 @@
                 </table>
             </div>
         {% else %}
-            <div class="alert alert-info">Ainda nao existem pecas registadas.</div>
+            <div class="alert alert-info">Ainda nao existem pe&ccedil;as registadas.</div>
         {% endif %}
     </div>
 </div>

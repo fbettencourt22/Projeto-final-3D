@@ -9,7 +9,7 @@
                 <button class="nav-link active" id="calc-tab" data-bs-toggle="tab" data-bs-target="#tab-calculadora" type="button" role="tab" aria-controls="tab-calculadora" aria-selected="true">Calculadora</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#tab-historico" type="button" role="tab" aria-controls="tab-historico" aria-selected="false">Historico</button>
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#tab-historico" type="button" role="tab" aria-controls="tab-historico" aria-selected="false">Pe&ccedil;as</button>
             </li>
         </ul>
         <div class="tab-content pt-4" id="calcTabsContent">
@@ -35,9 +35,9 @@
                 {% if result %}
                     <div class="table-responsive mt-4">
                         <table class="table table-striped align-middle">
-                            <caption>Resultado da ultima peca</caption>
+                            <caption>Resultado da ultima pe&ccedil;a</caption>
                             <tbody>
-                                <tr><th scope="row">Peca</th><td>{{ result.piece_name }}</td></tr>
+                                <tr><th scope="row">Pe&ccedil;a</th><td>{{ result.piece_name }}</td></tr>
                                 <tr><th scope="row">Data</th><td>{{ result.created_at|date:"d/m/Y H:i" }}</td></tr>
                                 <tr><th scope="row">Energia (kWh)</th><td>{{ result.consumption_kwh }}</td></tr>
                                 <tr><th scope="row">Custo Filamento (EUR)</th><td>{{ result.cost_filament }}</td></tr>
@@ -67,7 +67,7 @@
                         <table class="table table-striped align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Peca</th>
+                                    <th>Pe&ccedil;a</th>
                                     <th>Filamento (g)</th>
                                     <th>Tempo (h)</th>
                                     <th>Margem (%)</th>
@@ -87,7 +87,7 @@
                             <tbody>
                                 {% for piece in pieces %}
                                     <tr>
-                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Peca #{{ piece.pk }}{% endif %}</td>
+                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Pe&ccedil;a #{{ piece.pk }}{% endif %}</td>
                                         <td>{{ piece.filament_weight_g }}</td>
                                         <td>{{ piece.print_time_hours }}</td>
                                         <td>{{ piece.margin_percentage }}</td>
@@ -117,7 +117,7 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">Ainda nao existem pecas registadas.</div>
+                    <div class="alert alert-info">Ainda nao existem pe&ccedil;as registadas.</div>
                 {% endif %}
             </div>
         </div>

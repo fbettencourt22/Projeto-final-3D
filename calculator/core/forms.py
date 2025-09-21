@@ -1,9 +1,9 @@
-from django import forms
+﻿from django import forms
 
 
 class PrintJobForm(forms.Form):
     piece_name = forms.CharField(
-        label="Nome da peca",
+        label="Nome da Peça",
         max_length=100,
         required=False,
     )
@@ -26,7 +26,7 @@ class PrintJobForm(forms.Form):
         max_digits=10,
     )
     labour_time_minutes = forms.DecimalField(
-        label="Mao de Obra (min)",
+        label="Mão de Obra (min)",
         min_value=0,
         decimal_places=2,
         max_digits=10,
@@ -42,9 +42,8 @@ class PrintJobForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            css_class = "form-control"
-            field.widget.attrs.setdefault("class", css_class)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "form-control")
             if isinstance(field.widget, forms.NumberInput):
                 field.widget.attrs.setdefault("step", "0.01")
 
@@ -53,3 +52,15 @@ class PrintJobForm(forms.Form):
         if value >= 100:
             raise forms.ValidationError("A margem deve ser inferior a 100%.")
         return value
+
+
+class PieceImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label="Ficheiro CSV",
+        help_text="Formato: piece_name, filament_price_per_kg, filament_weight_g, print_time_hours, labour_time_minutes, margin_percentage",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["csv_file"].widget.attrs.setdefault("class", "form-control")
+        self.fields["csv_file"].widget.attrs.setdefault("accept", ".csv")
