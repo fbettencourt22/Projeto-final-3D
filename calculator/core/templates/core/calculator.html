@@ -1,0 +1,126 @@
+﻿{% extends "base.html" %}
+{% block title %}Calculadora{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h1 class="card-title h3 mb-4">Calculadora de Impressao 3D</h1>
+        <ul class="nav nav-tabs" id="calcTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="calc-tab" data-bs-toggle="tab" data-bs-target="#tab-calculadora" type="button" role="tab" aria-controls="tab-calculadora" aria-selected="true">Calculadora</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#tab-historico" type="button" role="tab" aria-controls="tab-historico" aria-selected="false">Historico</button>
+            </li>
+        </ul>
+        <div class="tab-content pt-4" id="calcTabsContent">
+            <div class="tab-pane fade show active" id="tab-calculadora" role="tabpanel" aria-labelledby="calc-tab">
+                <form method="post" novalidate class="row g-3">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Calcular</button>
+                    </div>
+                </form>
+                {% if result %}
+                    <div class="table-responsive mt-4">
+                        <table class="table table-striped align-middle">
+                            <caption>Resultado da ultima peca</caption>
+                            <tbody>
+                                <tr><th scope="row">Peca</th><td>{{ result.piece_name }}</td></tr>
+                                <tr><th scope="row">Data</th><td>{{ result.created_at|date:"d/m/Y H:i" }}</td></tr>
+                                <tr><th scope="row">Energia (kWh)</th><td>{{ result.consumption_kwh }}</td></tr>
+                                <tr><th scope="row">Custo Filamento (EUR)</th><td>{{ result.cost_filament }}</td></tr>
+                                <tr><th scope="row">Custo Energia (EUR)</th><td>{{ result.cost_energy }}</td></tr>
+                                <tr><th scope="row">Custo Mao de Obra (EUR)</th><td>{{ result.cost_labour }}</td></tr>
+                                <tr><th scope="row">Custo Maquina (EUR)</th><td>{{ result.cost_machine }}</td></tr>
+                                <tr><th scope="row">Custo Total (EUR)</th><td>{{ result.cost_total }}</td></tr>
+                                <tr><th scope="row">Preco Final (EUR)</th><td class="fw-bold">{{ result.price_final }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+                <div class="mt-4">
+                    <h2 class="h5">Constantes em uso</h2>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Energia: {{ constants.VALOR_KWH }} EUR/kWh</li>
+                        <li class="list-group-item">Consumo impressora: {{ constants.CONSUMO_W }} W</li>
+                        <li class="list-group-item">Custo mao de obra: {{ constants.CUSTO_MAO_OBRA }} EUR/hora</li>
+                        <li class="list-group-item">Desperdicio filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
+                        <li class="list-group-item">Custo maquina: {{ constants.CUSTO_MAQUINA_HORA }} EUR/hora</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tab-historico" role="tabpanel" aria-labelledby="history-tab">
+                {% if pieces %}
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Peca</th>
+                                    <th>Filamento (g)</th>
+                                    <th>Tempo (h)</th>
+                                    <th>Margem (%)</th>
+                                    <th>Custo Filamento (EUR)</th>
+                                    <th>Custo Energia (EUR)</th>
+                                    <th>Custo Mao de Obra (EUR)</th>
+                                    <th>Custo Maquina (EUR)</th>
+                                    <th>Custo Total (EUR)</th>
+                                    <th>Preco Final (EUR)</th>
+                                    <th>Data</th>
+                                    {% if request.user.is_superuser %}
+                                        <th>Utilizador</th>
+                                    {% endif %}
+                                    <th>Acoes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for piece in pieces %}
+                                    <tr>
+                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Peca #{{ piece.pk }}{% endif %}</td>
+                                        <td>{{ piece.filament_weight_g }}</td>
+                                        <td>{{ piece.print_time_hours }}</td>
+                                        <td>{{ piece.margin_percentage }}</td>
+                                        <td>{{ piece.cost_filament }}</td>
+                                        <td>{{ piece.cost_energy }}</td>
+                                        <td>{{ piece.cost_labour }}</td>
+                                        <td>{{ piece.cost_machine }}</td>
+                                        <td>{{ piece.cost_total }}</td>
+                                        <td>{{ piece.price_final }}</td>
+                                        <td>{{ piece.created_at|date:"d/m/Y H:i" }}</td>
+                                        {% if request.user.is_superuser %}
+                                            <td>{{ piece.user.get_username }}</td>
+                                        {% endif %}
+                                        <td>
+                                            {% if request.user.is_superuser or piece.user == request.user %}
+                                                <div class="d-flex gap-2">
+                                                    <a class="btn btn-sm btn-outline-primary" href="{% url 'piece_edit' piece.pk %}">Editar</a>
+                                                    <a class="btn btn-sm btn-outline-danger" href="{% url 'piece_delete' piece.pk %}">Apagar</a>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">Ainda nao existem pecas registadas.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

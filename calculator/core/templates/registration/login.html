@@ -1,0 +1,42 @@
+﻿{% extends "base.html" %}
+{% load form_extras %}
+{% block title %}Iniciar sessao{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4 mb-3 text-center">Iniciar sessao</h1>
+                {% if form.errors %}
+                    <div class="alert alert-danger">Credenciais incorretas. Tenta novamente.</div>
+                {% endif %}
+                <form method="post" novalidate class="row g-3">
+                    {% csrf_token %}
+                    <div class="col-12">
+                        <label class="form-label" for="id_username">Utilizador</label>
+                        {{ form.username|add_class:"form-control" }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="id_password">Palavra-passe</label>
+                        {{ form.password|add_class:"form-control" }}
+                    </div>
+                    {% if form.non_field_errors %}
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="col-12 d-grid">
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                    </div>
+                    <input type="hidden" name="next" value="{{ next }}">
+                </form>
+                <p class="text-muted small text-center mt-3">Precisas de acesso? Fala com o administrador.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
