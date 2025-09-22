@@ -55,12 +55,13 @@ class PrintJobForm(forms.Form):
 
 
 class PieceImportForm(forms.Form):
-    csv_file = forms.FileField(
-        label="Ficheiro CSV",
-        help_text="Formato: piece_name, filament_price_per_kg, filament_weight_g, print_time_hours, labour_time_minutes, margin_percentage",
+    file = forms.FileField(
+        label="Ficheiro Excel",
+        help_text="Envie um ficheiro .xlsx com as colunas: piece_name, filament_price_per_kg, filament_weight_g, print_time_hours, labour_time_minutes, margin_percentage.",
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["csv_file"].widget.attrs.setdefault("class", "form-control")
-        self.fields["csv_file"].widget.attrs.setdefault("accept", ".csv")
+        field = self.fields["file"]
+        field.widget.attrs.setdefault("class", "form-control")
+        field.widget.attrs.setdefault("accept", ".xlsx")

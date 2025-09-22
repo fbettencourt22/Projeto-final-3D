@@ -1,12 +1,12 @@
 ﻿{% extends "base.html" %}
 {% load form_extras %}
-{% block title %}Iniciar sessao{% endblock %}
+{% block title %}Iniciar sessão{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h1 class="h4 mb-3 text-center">Iniciar sessao</h1>
+                <h1 class="h4 mb-3 text-center">Iniciar sessão</h1>
                 {% if form.errors %}
                     <div class="alert alert-danger">Credenciais incorretas. Tenta novamente.</div>
                 {% endif %}
@@ -40,3 +40,4 @@
     </div>
 </div>
 {% endblock %}
+

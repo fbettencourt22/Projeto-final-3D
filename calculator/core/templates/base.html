@@ -11,19 +11,19 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
         <a class="navbar-brand" href="{% url 'calculator' %}">Calculadora 3D</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegacao">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegação">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 {% if request.user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'calculator' %}">Calculadora</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'pieces_list' %}">Pe&ccedil;as</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'pieces_list' %}">Peças</a></li>
                 {% endif %}
             </ul>
             {% if request.user.is_authenticated %}
-                <span class="navbar-text me-3">Ola, {{ request.user.get_username }}</span>
-                <a class="btn btn-outline-light" href="{% url 'logout' %}">Terminar sessao</a>
+                <span class="navbar-text me-3">Olá, {{ request.user.get_username }}</span>
+                <a class="btn btn-outline-light" href="{% url 'logout' %}">Terminar sessão</a>
             {% else %}
                 <a class="btn btn-outline-light" href="{% url 'login' %}">Entrar</a>
             {% endif %}
@@ -31,6 +31,15 @@
     </div>
 </nav>
 <main class="container py-4">
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
     {% block content %}{% endblock %}
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

@@ -1,38 +1,40 @@
 ﻿{% extends "base.html" %}
-{% block title %}Listagem de pe&ccedil;as{% endblock %}
+{% block title %}Listagem de peças{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-body">
-        <h1 class="h3 mb-4">Pe&ccedil;as registadas</h1>
-        <div class="mb-3">
-            <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar a calculadora</a>
+        <h1 class="h3 mb-4">Peças registadas</h1>
+        <div class="mb-3 d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar à calculadora</a>
+            <a class="btn btn-outline-success" href="{% url 'piece_export' %}">Exportar Excel</a>
+            <a class="btn btn-outline-secondary" href="{% url 'piece_import' %}">Importar Excel</a>
         </div>
         {% if pieces %}
             <div class="table-responsive">
                 <table class="table table-striped align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Pe&ccedil;a</th>
+                            <th>Peça</th>
                             <th>Filamento (g)</th>
                             <th>Tempo (h)</th>
                             <th>Margem (%)</th>
                             <th>Custo Filamento (EUR)</th>
                             <th>Custo Energia (EUR)</th>
-                            <th>Custo Mao de Obra (EUR)</th>
-                            <th>Custo Maquina (EUR)</th>
+                            <th>Custo Mão de Obra (EUR)</th>
+                            <th>Custo Máquina (EUR)</th>
                             <th>Custo Total (EUR)</th>
-                            <th>Preco Final (EUR)</th>
+                            <th>Preço Final (EUR)</th>
                             <th>Data</th>
                             {% if request.user.is_superuser %}
                                 <th>Utilizador</th>
                             {% endif %}
-                            <th>Acoes</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for piece in pieces %}
                             <tr>
-                                <td>{% if piece.name %}{{ piece.name }}{% else %}Pe&ccedil;a #{{ piece.pk }}{% endif %}</td>
+                                <td>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</td>
                                 <td>{{ piece.filament_weight_g }}</td>
                                 <td>{{ piece.print_time_hours }}</td>
                                 <td>{{ piece.margin_percentage }}</td>
@@ -62,7 +64,7 @@
                 </table>
             </div>
         {% else %}
-            <div class="alert alert-info">Ainda nao existem pe&ccedil;as registadas.</div>
+            <div class="alert alert-info">Ainda não existem peças registadas.</div>
         {% endif %}
     </div>
 </div>

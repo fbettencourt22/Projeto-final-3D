@@ -1,6 +1,6 @@
-﻿import csv
-import io
-from decimal import Decimal, ROUND_HALF_UP
+﻿import io
+from pathlib import Path
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -62,6 +62,27 @@ def calculate_print_job(data: dict) -> dict:
             Decimal("0.0001"), rounding=ROUND_HALF_UP
         ),
     }
+
+
+
+
+def parse_decimal(value):
+    """Converte o valor em Decimal, aceitando strings com vírgula."""
+    if isinstance(value, Decimal):
+        return value
+    if value is None:
+        raise ValueError("valor em falta")
+    value_str = str(value).strip()
+    if not value_str:
+        raise ValueError("valor em falta")
+    value_str = value_str.replace(",", ".")
+    try:
+        return Decimal(value_str)
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(f"valor inválido: {value}") from exc
+
+
+
 
 
 def piece_permission_check(user, piece: PrintJob):
@@ -196,141 +217,191 @@ def piece_delete_view(request, pk: int):
     return render(request, "core/piece_confirm_delete.html", {"piece": piece})
 
 
+
+
 @login_required
 def piece_export_view(request):
     pieces = PrintJob.objects.select_related("user")
     if not request.user.is_superuser:
         pieces = pieces.filter(user=request.user)
 
-    response = HttpResponse(content_type="text/csv")
-    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-    response["Content-Disposition"] = (
-        f'attachment; filename="pecas_{timestamp}.csv"'
-    )
+    try:
+        from openpyxl import Workbook  # type: ignore
+    except ImportError:
+        messages.error(
+            request,
+            "Suporte a Excel indisponível (biblioteca openpyxl não instalada).",
+        )
+        return redirect("pieces_list")
 
-    writer = csv.writer(response)
-    writer.writerow(
-        [
-            "piece_name",
-            "filament_price_per_kg",
-            "filament_weight_g",
-            "print_time_hours",
-            "labour_time_minutes",
-            "margin_percentage",
-            "cost_filament",
-            "cost_energy",
-            "cost_labour",
-            "cost_machine",
-            "cost_total",
-            "price_final",
-            "consumption_kwh",
-            "created_at",
-            "owner",
-        ]
-    )
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Peças"
+    headers = [
+        "piece_name",
+        "filament_price_per_kg",
+        "filament_weight_g",
+        "print_time_hours",
+        "labour_time_minutes",
+        "margin_percentage",
+        "cost_filament",
+        "cost_energy",
+        "cost_labour",
+        "cost_machine",
+        "cost_total",
+        "price_final",
+        "consumption_kwh",
+        "created_at",
+        "owner",
+    ]
+    ws.append(headers)
 
     for piece in pieces:
-        writer.writerow(
+        created_at = piece.created_at
+        if created_at is not None:
+            if timezone.is_aware(created_at):
+                created_at = timezone.localtime(created_at)
+            created_at = created_at.replace(tzinfo=None)
+        ws.append(
             [
                 piece.name or "",
-                piece.filament_price_per_kg,
-                piece.filament_weight_g,
-                piece.print_time_hours,
-                piece.labour_time_minutes,
-                piece.margin_percentage,
-                piece.cost_filament,
-                piece.cost_energy,
-                piece.cost_labour,
-                piece.cost_machine,
-                piece.cost_total,
-                piece.price_final,
-                piece.consumption_kwh,
-                piece.created_at.isoformat(),
+                float(piece.filament_price_per_kg),
+                float(piece.filament_weight_g),
+                float(piece.print_time_hours),
+                float(piece.labour_time_minutes),
+                float(piece.margin_percentage),
+                float(piece.cost_filament),
+                float(piece.cost_energy),
+                float(piece.cost_labour),
+                float(piece.cost_machine),
+                float(piece.cost_total),
+                float(piece.price_final),
+                float(piece.consumption_kwh),
+                created_at,
                 piece.user.get_username() if piece.user else "",
             ]
         )
 
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+    response[
+        "Content-Disposition"
+    ] = f'attachment; filename="pecas_{timestamp}.xlsx"'
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    response.write(buffer.getvalue())
     return response
+
 
 
 @login_required
 def piece_import_view(request):
     form = PieceImportForm()
-    errors = []
+    errors: list[str] = []
+    created = 0
+
+    numeric_fields = [
+        "filament_price_per_kg",
+        "filament_weight_g",
+        "print_time_hours",
+        "labour_time_minutes",
+        "margin_percentage",
+    ]
+
+    def process_payload(raw_payload, line_no):
+        nonlocal created
+        cleaned = {
+            "piece_name": (raw_payload.get("piece_name") or "").strip(),
+        }
+        for key in numeric_fields:
+            try:
+                cleaned[key] = parse_decimal(raw_payload.get(key))
+            except ValueError as exc:
+                raise ValueError(f"{key}: {exc}") from exc
+
+        if cleaned["margin_percentage"] >= Decimal("100"):
+            raise ValueError("Margem deve ser inferior a 100%.")
+
+        result = calculate_print_job(cleaned)
+
+        PrintJob.objects.create(
+            user=request.user,
+            name=cleaned["piece_name"],
+            filament_price_per_kg=cleaned["filament_price_per_kg"],
+            filament_weight_g=cleaned["filament_weight_g"],
+            print_time_hours=cleaned["print_time_hours"],
+            labour_time_minutes=cleaned["labour_time_minutes"],
+            margin_percentage=cleaned["margin_percentage"],
+            cost_filament=result["cost_filament"],
+            cost_energy=result["cost_energy"],
+            cost_labour=result["cost_labour"],
+            cost_machine=result["cost_machine"],
+            cost_total=result["cost_total"],
+            price_final=result["price_final"],
+            consumption_kwh=result["consumption_kwh"],
+        )
+        created += 1
 
     if request.method == "POST":
         form = PieceImportForm(request.POST, request.FILES)
         if form.is_valid():
-            uploaded = form.cleaned_data["csv_file"]
-            try:
-                data = uploaded.read().decode("utf-8-sig")
-            except UnicodeDecodeError:
-                errors.append("Não foi possível ler o ficheiro como UTF-8.")
-                data = ""
+            uploaded = form.cleaned_data["file"]
+            ext = Path(uploaded.name or "").suffix.lower()
 
-            if data:
-                reader = csv.DictReader(io.StringIO(data))
-                missing = [col for col in IMPORT_COLUMNS if col not in reader.fieldnames]
-                if missing:
+            if ext != ".xlsx":
+                errors.append("Formato não suportado. Utilize um ficheiro Excel (.xlsx).")
+            else:
+                try:
+                    from openpyxl import load_workbook  # type: ignore
+                except ImportError:
                     errors.append(
-                        "Colunas em falta: " + ", ".join(missing)
+                        "Suporte a Excel indisponível (biblioteca openpyxl não instalada)."
                     )
                 else:
-                    created = 0
-                    for idx, row in enumerate(reader, start=2):
-                        try:
-                            payload = {
-                                "piece_name": row.get("piece_name", "").strip(),
-                                "filament_price_per_kg": row["filament_price_per_kg"],
-                                "filament_weight_g": row["filament_weight_g"],
-                                "print_time_hours": row["print_time_hours"],
-                                "labour_time_minutes": row["labour_time_minutes"],
-                                "margin_percentage": row["margin_percentage"],
-                            }
-                            for key in [
-                                "filament_price_per_kg",
-                                "filament_weight_g",
-                                "print_time_hours",
-                                "labour_time_minutes",
-                                "margin_percentage",
-                            ]:
-                                payload[key] = Decimal(payload[key])
+                    try:
+                        uploaded.seek(0)
+                        workbook = load_workbook(uploaded, data_only=True)
+                        sheet = workbook.active
+                    except Exception as exc:  # noqa: BLE001
+                        errors.append(f"Erro ao ler Excel: {exc}")
+                    else:
+                        rows = list(sheet.iter_rows(values_only=True))
+                        if not rows:
+                            errors.append("O ficheiro Excel está vazio.")
+                        else:
+                            headers = [
+                                (str(cell).strip() if cell is not None else "")
+                                for cell in rows[0]
+                            ]
+                            missing = [
+                                col for col in IMPORT_COLUMNS if col not in headers
+                            ]
+                            if missing:
+                                errors.append(
+                                    "Colunas em falta: " + ", ".join(missing)
+                                )
+                            else:
+                                index_map = {name: headers.index(name) for name in IMPORT_COLUMNS}
+                                for row_number, row in enumerate(rows[1:], start=2):
+                                    payload = {}
+                                    for key, idx in index_map.items():
+                                        payload[key] = row[idx] if idx < len(row) else None
+                                    try:
+                                        process_payload(payload, row_number)
+                                    except Exception as exc:  # noqa: BLE001
+                                        errors.append(f"Linha {row_number}: {exc}")
 
-                            if payload["margin_percentage"] >= Decimal("100"):
-                                raise ValueError("Margem deve ser inferior a 100%.")
-
-
-                            result = calculate_print_job(payload)
-
-                            PrintJob.objects.create(
-                                user=request.user,
-                                name=payload["piece_name"],
-                                filament_price_per_kg=payload["filament_price_per_kg"],
-                                filament_weight_g=payload["filament_weight_g"],
-                                print_time_hours=payload["print_time_hours"],
-                                labour_time_minutes=payload["labour_time_minutes"],
-                                margin_percentage=payload["margin_percentage"],
-                                cost_filament=result["cost_filament"],
-                                cost_energy=result["cost_energy"],
-                                cost_labour=result["cost_labour"],
-                                cost_machine=result["cost_machine"],
-                                cost_total=result["cost_total"],
-                                price_final=result["price_final"],
-                                consumption_kwh=result["consumption_kwh"],
-                            )
-                            created += 1
-                        except Exception as exc:  # noqa: BLE001
-                            errors.append(
-                                f"Linha {idx}: {exc}"
-                            )
-
-                    if created:
-                        messages.success(
-                            request,
-                            f"Importadas {created} peça(s) para o seu utilizador.",
-                        )
-                        if not errors:
-                            return redirect("pieces_list")
+            if created:
+                messages.success(
+                    request,
+                    f"Importadas {created} peça(s) para o seu utilizador.",
+                )
+                if not errors:
+                    return redirect("pieces_list")
 
     return render(
         request,
@@ -341,3 +412,7 @@ def piece_import_view(request):
             "expected_columns": IMPORT_COLUMNS,
         },
     )
+
+
+
+

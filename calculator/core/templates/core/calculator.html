@@ -3,13 +3,13 @@
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-body">
-        <h1 class="card-title h3 mb-4">Calculadora de Impressao 3D</h1>
+        <h1 class="card-title h3 mb-4">Calculadora de Impressão 3D</h1>
         <ul class="nav nav-tabs" id="calcTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="calc-tab" data-bs-toggle="tab" data-bs-target="#tab-calculadora" type="button" role="tab" aria-controls="tab-calculadora" aria-selected="true">Calculadora</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#tab-historico" type="button" role="tab" aria-controls="tab-historico" aria-selected="false">Pe&ccedil;as</button>
+                <button class="nav-link" id="pieces-tab" data-bs-toggle="tab" data-bs-target="#tab-pecas" type="button" role="tab" aria-controls="tab-pecas" aria-selected="false">Peças</button>
             </li>
         </ul>
         <div class="tab-content pt-4" id="calcTabsContent">
@@ -35,17 +35,17 @@
                 {% if result %}
                     <div class="table-responsive mt-4">
                         <table class="table table-striped align-middle">
-                            <caption>Resultado da ultima pe&ccedil;a</caption>
+                            <caption>Resultado da última peça</caption>
                             <tbody>
-                                <tr><th scope="row">Pe&ccedil;a</th><td>{{ result.piece_name }}</td></tr>
+                                <tr><th scope="row">Peça</th><td>{{ result.piece_name }}</td></tr>
                                 <tr><th scope="row">Data</th><td>{{ result.created_at|date:"d/m/Y H:i" }}</td></tr>
                                 <tr><th scope="row">Energia (kWh)</th><td>{{ result.consumption_kwh }}</td></tr>
                                 <tr><th scope="row">Custo Filamento (EUR)</th><td>{{ result.cost_filament }}</td></tr>
                                 <tr><th scope="row">Custo Energia (EUR)</th><td>{{ result.cost_energy }}</td></tr>
-                                <tr><th scope="row">Custo Mao de Obra (EUR)</th><td>{{ result.cost_labour }}</td></tr>
-                                <tr><th scope="row">Custo Maquina (EUR)</th><td>{{ result.cost_machine }}</td></tr>
+                                <tr><th scope="row">Custo Mão de Obra (EUR)</th><td>{{ result.cost_labour }}</td></tr>
+                                <tr><th scope="row">Custo Máquina (EUR)</th><td>{{ result.cost_machine }}</td></tr>
                                 <tr><th scope="row">Custo Total (EUR)</th><td>{{ result.cost_total }}</td></tr>
-                                <tr><th scope="row">Preco Final (EUR)</th><td class="fw-bold">{{ result.price_final }}</td></tr>
+                                <tr><th scope="row">Preço Final (EUR)</th><td class="fw-bold">{{ result.price_final }}</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -55,39 +55,43 @@
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">Energia: {{ constants.VALOR_KWH }} EUR/kWh</li>
                         <li class="list-group-item">Consumo impressora: {{ constants.CONSUMO_W }} W</li>
-                        <li class="list-group-item">Custo mao de obra: {{ constants.CUSTO_MAO_OBRA }} EUR/hora</li>
-                        <li class="list-group-item">Desperdicio filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
-                        <li class="list-group-item">Custo maquina: {{ constants.CUSTO_MAQUINA_HORA }} EUR/hora</li>
+                        <li class="list-group-item">Custo mão de obra: {{ constants.CUSTO_MAO_OBRA }} EUR/hora</li>
+                        <li class="list-group-item">Desperdício de filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
+                        <li class="list-group-item">Custo máquina: {{ constants.CUSTO_MAQUINA_HORA }} EUR/hora</li>
                     </ul>
                 </div>
             </div>
-            <div class="tab-pane fade" id="tab-historico" role="tabpanel" aria-labelledby="history-tab">
+            <div class="tab-pane fade" id="tab-pecas" role="tabpanel" aria-labelledby="pieces-tab">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a class="btn btn-outline-success btn-sm" href="{% url 'piece_export' %}">Exportar Excel</a>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'piece_import' %}">Importar Excel</a>
+                </div>
                 {% if pieces %}
                     <div class="table-responsive">
                         <table class="table table-striped align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Pe&ccedil;a</th>
+                                    <th>Peça</th>
                                     <th>Filamento (g)</th>
                                     <th>Tempo (h)</th>
                                     <th>Margem (%)</th>
                                     <th>Custo Filamento (EUR)</th>
                                     <th>Custo Energia (EUR)</th>
-                                    <th>Custo Mao de Obra (EUR)</th>
-                                    <th>Custo Maquina (EUR)</th>
+                                    <th>Custo Mão de Obra (EUR)</th>
+                                    <th>Custo Máquina (EUR)</th>
                                     <th>Custo Total (EUR)</th>
-                                    <th>Preco Final (EUR)</th>
+                                    <th>Preço Final (EUR)</th>
                                     <th>Data</th>
                                     {% if request.user.is_superuser %}
                                         <th>Utilizador</th>
                                     {% endif %}
-                                    <th>Acoes</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for piece in pieces %}
                                     <tr>
-                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Pe&ccedil;a #{{ piece.pk }}{% endif %}</td>
+                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</td>
                                         <td>{{ piece.filament_weight_g }}</td>
                                         <td>{{ piece.print_time_hours }}</td>
                                         <td>{{ piece.margin_percentage }}</td>
@@ -117,7 +121,7 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">Ainda nao existem pe&ccedil;as registadas.</div>
+                    <div class="alert alert-info">Ainda não existem peças registadas.</div>
                 {% endif %}
             </div>
         </div>
