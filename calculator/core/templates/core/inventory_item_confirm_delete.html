@@ -1,0 +1,21 @@
+﻿{% extends "base.html" %}
+{% block title %}Apagar do inventario{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4 mb-3">Remover peca do inventario</h1>
+                <p>Tem a certeza que deseja remover <strong>{{ item.piece_name }}</strong> do inventario?</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger" type="submit">Sim, remover</button>
+                        <a class="btn btn-outline-secondary" href="{% url 'inventory' %}?tab=pieces">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

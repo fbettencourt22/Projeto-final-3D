@@ -1,16 +1,19 @@
-﻿import io
+import io
 from pathlib import Path
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+import unicodedata
 
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.db.models import Q
 
-from .forms import PieceImportForm, PrintJobForm
-from .models import PrintJob
+from .forms import FilamentTypeForm, InventoryQuantityForm, PieceImportForm, PrintJobForm
+from .models import FilamentType, InventoryItem, PrintJob
 
 VALOR_KWH = Decimal("0.158")
 CONSUMO_W = Decimal("140")
@@ -66,8 +69,16 @@ def calculate_print_job(data: dict) -> dict:
 
 
 
+def normalize_text(value: str) -> str:
+    if not value:
+        return ''
+    normalized = unicodedata.normalize('NFKD', value)
+    stripped = ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+    return stripped.lower()
+
+
 def parse_decimal(value):
-    """Converte o valor em Decimal, aceitando strings com vírgula."""
+    """Converte o valor em Decimal, aceitando strings com vArgula."""
     if isinstance(value, Decimal):
         return value
     if value is None:
@@ -79,7 +90,7 @@ def parse_decimal(value):
     try:
         return Decimal(value_str)
     except (InvalidOperation, ValueError) as exc:
-        raise ValueError(f"valor inválido: {value}") from exc
+        raise ValueError(f"valor invAlido: {value}") from exc
 
 
 
@@ -98,18 +109,215 @@ def logout_view(request):
 
 
 @login_required
+def dashboard_view(request):
+    links = [
+        {'url': 'calculator', 'label': 'Calculadora', 'description': 'Calculadora de custos de impressao 3D.'},
+        {'url': 'pieces_list', 'label': 'Historico de pecas', 'description': 'Consulte, edite e exporte os seus calculos anteriores.'},
+        {'url': 'piece_import', 'label': 'Importar pecas', 'description': 'Carregue um ficheiro Excel para criar pecas em massa.'},
+        {'url': 'inventory', 'label': 'Inventario', 'description': 'Gerir filamentos e pecas disponiveis.'},
+    ]
+    return render(request, 'core/dashboard.html', {'links': links})
+
+
+@login_required
+def inventory_view(request):
+    active_tab = request.GET.get('tab', 'filaments')
+    if active_tab not in {'filaments', 'pieces'}:
+        active_tab = 'filaments'
+
+    filaments = FilamentType.objects.filter(user=request.user).order_by('name')
+    inventory_items = (
+        InventoryItem.objects.filter(user=request.user)
+        .select_related('print_job')
+        .order_by('piece_name')
+    )
+
+    pieces_search = request.GET.get('pieces_search', '').strip()
+    if pieces_search:
+        inventory_items = inventory_items.filter(
+            Q(piece_name__icontains=pieces_search) | Q(print_job__name__icontains=pieces_search)
+        )
+        active_tab = 'pieces'
+
+    inventory_items_list = list(inventory_items)
+    if pieces_search:
+        norm_search = normalize_text(pieces_search)
+        inventory_items_list = [
+            item
+            for item in inventory_items_list
+            if norm_search in normalize_text(item.piece_name or '')
+            or (item.print_job and norm_search in normalize_text(item.print_job.name or ''))
+        ]
+    else:
+        inventory_items_list = inventory_items_list
+
+    filament_form = FilamentTypeForm()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'add_filament':
+            filament_form = FilamentTypeForm(request.POST)
+            if filament_form.is_valid():
+                filament = filament_form.save(commit=False)
+                filament.user = request.user
+                filament.save()
+                messages.success(request, 'Filamento guardado no inventario.')
+                return redirect(f"{reverse('inventory')}?tab=filaments")
+        active_tab = 'filaments'
+
+    return render(
+        request,
+        'core/inventory.html',
+        {
+            'filament_form': filament_form,
+            'filaments': filaments,
+            'inventory_items': inventory_items_list,
+            'active_tab': active_tab,
+            'pieces_search': pieces_search,
+        },
+    )
+
+
+@login_required
+def inventory_add_piece_view(request, pk):
+    piece = get_object_or_404(PrintJob, pk=pk)
+    if not piece_permission_check(request.user, piece):
+        return HttpResponseForbidden('Not allowed')
+
+    form = InventoryQuantityForm()
+    if request.method == 'POST':
+        form = InventoryQuantityForm(request.POST)
+        if form.is_valid():
+            quantity = form.cleaned_data['quantity']
+            piece_label = piece.name or f'Peca #{piece.pk}'
+            item, created = InventoryItem.objects.get_or_create(
+                user=request.user,
+                print_job=piece,
+                defaults={'quantity': quantity, 'piece_name': piece_label},
+            )
+            if not created:
+                item.quantity += quantity
+                item.piece_name = piece_label
+                item.save(update_fields=['quantity', 'piece_name', 'updated_at'])
+            messages.success(request, 'Peca adicionada ao inventario.')
+            return redirect(f"{reverse('inventory')}?tab=pieces")
+
+    return render(
+        request,
+        'core/inventory_add_piece.html',
+        {
+            'form': form,
+            'piece': piece,
+        },
+    )
+
+
+@login_required
+def inventory_filament_edit_view(request, pk):
+    qs = FilamentType.objects.all() if request.user.is_superuser else FilamentType.objects.filter(user=request.user)
+    filament = get_object_or_404(qs, pk=pk)
+
+    form = FilamentTypeForm(instance=filament)
+    if request.method == 'POST':
+        form = FilamentTypeForm(request.POST, instance=filament)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Filamento atualizado.')
+            return redirect(f"{reverse('inventory')}?tab=filaments")
+
+    return render(
+        request,
+        'core/inventory_filament_form.html',
+        {
+            'form': form,
+            'filament': filament,
+        },
+    )
+
+
+@login_required
+def inventory_filament_delete_view(request, pk):
+    qs = FilamentType.objects.all() if request.user.is_superuser else FilamentType.objects.filter(user=request.user)
+    filament = get_object_or_404(qs, pk=pk)
+
+    if request.method == 'POST':
+        filament.delete()
+        messages.success(request, 'Filamento removido do inventario.')
+        return redirect(f"{reverse('inventory')}?tab=filaments")
+
+    return render(
+        request,
+        'core/inventory_filament_confirm_delete.html',
+        {
+            'filament': filament,
+        },
+    )
+
+
+@login_required
+def inventory_item_edit_view(request, pk):
+    qs = InventoryItem.objects.select_related('print_job')
+    if not request.user.is_superuser:
+        qs = qs.filter(user=request.user)
+    item = get_object_or_404(qs, pk=pk)
+
+    form = InventoryQuantityForm(initial={'quantity': item.quantity})
+    if request.method == 'POST':
+        form = InventoryQuantityForm(request.POST)
+        if form.is_valid():
+            item.quantity = form.cleaned_data['quantity']
+            item.save(update_fields=['quantity', 'updated_at'])
+            messages.success(request, 'Inventario atualizado.')
+            return redirect(f"{reverse('inventory')}?tab=pieces")
+
+    return render(
+        request,
+        'core/inventory_item_form.html',
+        {
+            'form': form,
+            'item': item,
+        },
+    )
+
+
+@login_required
+def inventory_item_delete_view(request, pk):
+    qs = InventoryItem.objects.all() if request.user.is_superuser else InventoryItem.objects.filter(user=request.user)
+    item = get_object_or_404(qs, pk=pk)
+
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, 'Peca removida do inventario.')
+        return redirect(f"{reverse('inventory')}?tab=pieces")
+
+    return render(
+        request,
+        'core/inventory_item_confirm_delete.html',
+        {
+            'item': item,
+        },
+    )
+
+
+@login_required
 def calculator_view(request):
     result = None
 
     if request.method == "POST":
-        form = PrintJobForm(request.POST)
+        form = PrintJobForm(request.POST, user=request.user)
         if form.is_valid():
             cleaned = form.cleaned_data
+            filament = cleaned["filament_type"]
+            cleaned["filament_price_per_kg"] = filament.price_per_kg
             result = calculate_print_job(cleaned)
+            result["filament_name"] = filament.name
+            result["filament_color"] = filament.color
+            result["filament_price_per_kg"] = to_currency(filament.price_per_kg)
 
             print_job = PrintJob.objects.create(
                 user=request.user,
                 name=cleaned.get("piece_name", ""),
+                filament_type=filament,
                 filament_price_per_kg=cleaned["filament_price_per_kg"],
                 filament_weight_g=cleaned["filament_weight_g"],
                 print_time_hours=cleaned["print_time_hours"],
@@ -124,22 +332,31 @@ def calculator_view(request):
                 consumption_kwh=result["consumption_kwh"],
             )
 
-            result["piece_name"] = print_job.name or f"Peça #{print_job.pk}"
+            result["piece_name"] = print_job.name or f"PeAa #{print_job.pk}"
             result["created_at"] = print_job.created_at
 
-            form = PrintJobForm()
+            form = PrintJobForm(user=request.user)
     else:
-        form = PrintJobForm()
+        form = PrintJobForm(user=request.user)
 
     pieces_qs = PrintJob.objects.select_related("user")
-    if not request.user.is_superuser:
-        pieces_qs = pieces_qs.filter(user=request.user)
-    pieces = pieces_qs
+    if request.user.is_superuser:
+        pieces = pieces_qs.exclude(inventory_records__isnull=False).distinct()
+    else:
+        pieces = (
+            pieces_qs
+            .filter(user=request.user)
+            .exclude(inventory_records__user=request.user)
+            .distinct()
+        )
+
+    has_filaments = form.fields["filament_type"].queryset.exists()
 
     context = {
         "form": form,
         "result": result,
         "pieces": pieces,
+        "has_filaments": has_filaments,
         "constants": {
             "VALOR_KWH": VALOR_KWH,
             "CONSUMO_W": CONSUMO_W,
@@ -154,9 +371,24 @@ def calculator_view(request):
 @login_required
 def pieces_list_view(request):
     pieces_qs = PrintJob.objects.select_related("user")
-    if not request.user.is_superuser:
-        pieces_qs = pieces_qs.filter(user=request.user)
-    context = {"pieces": pieces_qs}
+    if request.user.is_superuser:
+        pieces = pieces_qs.exclude(inventory_records__isnull=False).distinct()
+    else:
+        pieces = (
+            pieces_qs
+            .filter(user=request.user)
+            .exclude(inventory_records__user=request.user)
+            .distinct()
+        )
+
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        filters = Q(name__icontains=search_query)
+        if search_query.isdigit():
+            filters |= Q(pk=int(search_query))
+        pieces = pieces.filter(filters).distinct()
+
+    context = {"pieces": pieces, "search_query": search_query}
     return render(request, "core/pieces_list.html", context)
 
 
@@ -168,20 +400,31 @@ def piece_edit_view(request, pk: int):
 
     initial = {
         "piece_name": piece.name,
-        "filament_price_per_kg": piece.filament_price_per_kg,
+        "filament_type": piece.filament_type,
         "filament_weight_g": piece.filament_weight_g,
         "print_time_hours": piece.print_time_hours,
         "labour_time_minutes": piece.labour_time_minutes,
         "margin_percentage": piece.margin_percentage,
     }
 
+    if initial["filament_type"] is None:
+        filament_qs = FilamentType.objects.all().order_by("name")
+        if not request.user.is_superuser:
+            filament_qs = filament_qs.filter(user=request.user)
+        guess = filament_qs.filter(price_per_kg=piece.filament_price_per_kg).first()
+        if guess is not None:
+            initial["filament_type"] = guess
+
     if request.method == "POST":
-        form = PrintJobForm(request.POST)
+        form = PrintJobForm(request.POST, user=request.user, existing_piece=piece)
         if form.is_valid():
             cleaned = form.cleaned_data
+            filament = cleaned["filament_type"]
+            cleaned["filament_price_per_kg"] = filament.price_per_kg
             result = calculate_print_job(cleaned)
 
             piece.name = cleaned.get("piece_name", "")
+            piece.filament_type = filament
             piece.filament_price_per_kg = cleaned["filament_price_per_kg"]
             piece.filament_weight_g = cleaned["filament_weight_g"]
             piece.print_time_hours = cleaned["print_time_hours"]
@@ -199,7 +442,7 @@ def piece_edit_view(request, pk: int):
             piece.save()
             return redirect("pieces_list")
     else:
-        form = PrintJobForm(initial=initial)
+        form = PrintJobForm(initial=initial, user=request.user, existing_piece=piece)
 
     return render(request, "core/piece_form.html", {"form": form, "piece": piece})
 
@@ -230,13 +473,13 @@ def piece_export_view(request):
     except ImportError:
         messages.error(
             request,
-            "Suporte a Excel indisponível (biblioteca openpyxl não instalada).",
+            "Suporte a Excel indisponAvel (biblioteca openpyxl nAo instalada).",
         )
         return redirect("pieces_list")
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "Peças"
+    ws.title = "PeAas"
     headers = [
         "piece_name",
         "filament_price_per_kg",
@@ -317,6 +560,11 @@ def piece_import_view(request):
         cleaned = {
             "piece_name": (raw_payload.get("piece_name") or "").strip(),
         }
+        piece_name = cleaned["piece_name"]
+        if piece_name:
+            exists_qs = PrintJob.objects.filter(user=request.user, name__iexact=piece_name)
+            if exists_qs.exists():
+                raise ValueError("Ja existe uma peca com este nome.")
         for key in numeric_fields:
             try:
                 cleaned[key] = parse_decimal(raw_payload.get(key))
@@ -353,13 +601,13 @@ def piece_import_view(request):
             ext = Path(uploaded.name or "").suffix.lower()
 
             if ext != ".xlsx":
-                errors.append("Formato não suportado. Utilize um ficheiro Excel (.xlsx).")
+                errors.append("Formato nAo suportado. Utilize um ficheiro Excel (.xlsx).")
             else:
                 try:
                     from openpyxl import load_workbook  # type: ignore
                 except ImportError:
                     errors.append(
-                        "Suporte a Excel indisponível (biblioteca openpyxl não instalada)."
+                        "Suporte a Excel indisponAvel (biblioteca openpyxl nAo instalada)."
                     )
                 else:
                     try:
@@ -371,7 +619,7 @@ def piece_import_view(request):
                     else:
                         rows = list(sheet.iter_rows(values_only=True))
                         if not rows:
-                            errors.append("O ficheiro Excel está vazio.")
+                            errors.append("O ficheiro Excel estA vazio.")
                         else:
                             headers = [
                                 (str(cell).strip() if cell is not None else "")
@@ -398,7 +646,7 @@ def piece_import_view(request):
             if created:
                 messages.success(
                     request,
-                    f"Importadas {created} peça(s) para o seu utilizador.",
+                    f"Importadas {created} peAa(s) para o seu utilizador.",
                 )
                 if not errors:
                     return redirect("pieces_list")
@@ -412,6 +660,11 @@ def piece_import_view(request):
             "expected_columns": IMPORT_COLUMNS,
         },
     )
+
+
+
+
+
 
 
 

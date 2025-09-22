@@ -1,40 +1,52 @@
-﻿{% extends "base.html" %}
-{% block title %}Listagem de peças{% endblock %}
+{% extends "base.html" %}
+{% block title %}Listagem de pecas{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-body">
-        <h1 class="h3 mb-4">Peças registadas</h1>
+        <h1 class="h3 mb-4">Pecas registadas</h1>
         <div class="mb-3 d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar à calculadora</a>
+            <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar a calculadora</a>
             <a class="btn btn-outline-success" href="{% url 'piece_export' %}">Exportar Excel</a>
             <a class="btn btn-outline-secondary" href="{% url 'piece_import' %}">Importar Excel</a>
+            <a class="btn btn-outline-dark" href="{% url 'inventory' %}">Abrir inventario</a>
         </div>
+        <form class="row g-2 align-items-center mb-3" method="get">
+            <div class="col-sm-6 col-md-4 col-lg-3">
+                <input type="text" class="form-control" name="search" placeholder="Procurar peca" value="{{ search_query }}">
+            </div>
+            <div class="col-auto d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Procurar</button>
+                {% if search_query %}
+                    <a class="btn btn-outline-secondary" href="{% url 'pieces_list' %}">Limpar</a>
+                {% endif %}
+            </div>
+        </form>
         {% if pieces %}
             <div class="table-responsive">
                 <table class="table table-striped align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Peça</th>
+                            <th>Peca</th>
                             <th>Filamento (g)</th>
                             <th>Tempo (h)</th>
                             <th>Margem (%)</th>
                             <th>Custo Filamento (EUR)</th>
                             <th>Custo Energia (EUR)</th>
-                            <th>Custo Mão de Obra (EUR)</th>
-                            <th>Custo Máquina (EUR)</th>
+                            <th>Custo Mao de Obra (EUR)</th>
+                            <th>Custo Maquina (EUR)</th>
                             <th>Custo Total (EUR)</th>
-                            <th>Preço Final (EUR)</th>
+                            <th>Preco Final (EUR)</th>
                             <th>Data</th>
                             {% if request.user.is_superuser %}
                                 <th>Utilizador</th>
                             {% endif %}
-                            <th>Ações</th>
+                            <th>Accoes</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for piece in pieces %}
                             <tr>
-                                <td>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</td>
+                                <td>{% if piece.name %}{{ piece.name }}{% else %}Peca #{{ piece.pk }}{% endif %}</td>
                                 <td>{{ piece.filament_weight_g }}</td>
                                 <td>{{ piece.print_time_hours }}</td>
                                 <td>{{ piece.margin_percentage }}</td>
@@ -51,6 +63,7 @@
                                 <td>
                                     {% if request.user.is_superuser or piece.user == request.user %}
                                         <div class="d-flex gap-2">
+                                            <a class="btn btn-sm btn-outline-success" href="{% url 'inventory_add_piece' piece.pk %}">Enviar para inventario</a>
                                             <a class="btn btn-sm btn-outline-primary" href="{% url 'piece_edit' piece.pk %}">Editar</a>
                                             <a class="btn btn-sm btn-outline-danger" href="{% url 'piece_delete' piece.pk %}">Apagar</a>
                                         </div>
@@ -64,7 +77,11 @@
                 </table>
             </div>
         {% else %}
-            <div class="alert alert-info">Ainda não existem peças registadas.</div>
+            {% if search_query %}
+                <div class="alert alert-warning">Nenhuma peca corresponde a pesquisa.</div>
+            {% else %}
+                <div class="alert alert-info">Ainda nao existem pecas registadas.</div>
+            {% endif %}
         {% endif %}
     </div>
 </div>
