@@ -30,7 +30,7 @@ class PrintJobForm(forms.Form):
     filament_type = forms.ModelChoiceField(
         label="Filamento",
         queryset=FilamentType.objects.none(),
-        help_text="Selecione um filamento guardado no inventario.",
+        help_text="Selecione um filamento guardado no inventário.",
     )
     filament_weight_g = forms.DecimalField(
         label="Filamento (g)",
@@ -45,7 +45,7 @@ class PrintJobForm(forms.Form):
         max_digits=10,
     )
     labour_time_minutes = forms.DecimalField(
-        label="Mao de Obra (min)",
+        label="Mão de Obra (min)",
         min_value=0,
         decimal_places=2,
         max_digits=10,
@@ -74,8 +74,8 @@ class PrintJobForm(forms.Form):
         filament_field.empty_label = "Escolha um filamento"
 
         if not filament_qs.exists():
-            filament_field.empty_label = "Sem filamentos no inventario"
-            filament_field.help_text = "Adicione filamentos no inventario antes de calcular."
+            filament_field.empty_label = "Sem filamentos no inventário"
+            filament_field.help_text = "Adicione filamentos no inventário antes de calcular."
         else:
             selected_value = None
             if self.is_bound:
@@ -87,7 +87,7 @@ class PrintJobForm(forms.Form):
             if selected_value:
                 filament_field.help_text = ""
             else:
-                filament_field.help_text = "Selecione um filamento guardado no inventario."
+                filament_field.help_text = "Selecione um filamento guardado no inventário."
 
         for field in self.fields.values():
             if isinstance(field.widget, forms.Select):
@@ -146,7 +146,7 @@ class FilamentTypeForm(forms.ModelForm):
         fields = ['name', 'color', 'price_per_kg', 'weight_kg']
         labels = {
             'color': 'Cor',
-            'price_per_kg': 'Preco (EUR/kg)',
+            'price_per_kg': 'Preço (EUR/kg)',
             'weight_kg': 'Peso (kg)',
         }
 

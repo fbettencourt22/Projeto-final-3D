@@ -111,10 +111,10 @@ def logout_view(request):
 @login_required
 def dashboard_view(request):
     links = [
-        {'url': 'calculator', 'label': 'Calculadora', 'description': 'Calculadora de custos de impressao 3D.'},
-        {'url': 'pieces_list', 'label': 'Historico de pe\u00e7as', 'description': 'Consulte, edite e exporte os seus calculos anteriores.'},
+        {'url': 'calculator', 'label': 'Calculadora', 'description': 'Calculadora de custos de impressão 3D.'},
+        {'url': 'pieces_list', 'label': 'Histórico de pe\u00e7as', 'description': 'Consulte, edite e exporte os seus cálculos anteriores.'},
         {'url': 'piece_import', 'label': 'Importar pe\u00e7as', 'description': 'Carregue um ficheiro Excel para criar pe\u00e7as em massa.'},
-        {'url': 'inventory', 'label': 'Inventario', 'description': 'Gerir filamentos e pe\u00e7as disponiveis.'},
+        {'url': 'inventory', 'label': 'Inventário', 'description': 'Gerir filamentos e pe\u00e7as disponíveis.'},
     ]
     return render(request, 'core/dashboard.html', {'links': links})
 
@@ -156,7 +156,7 @@ def inventory_view(request):
                 filament = filament_form.save(commit=False)
                 filament.user = request.user
                 filament.save()
-                messages.success(request, 'Filamento guardado no inventario.')
+                messages.success(request, 'Filamento guardado no invent\u00e1rio.')
                 return redirect(f"{reverse('inventory')}?tab=filaments")
         active_tab = 'filaments'
 
@@ -177,7 +177,7 @@ def inventory_view(request):
 def inventory_add_piece_view(request, pk):
     piece = get_object_or_404(PrintJob, pk=pk)
     if not piece_permission_check(request.user, piece):
-        return HttpResponseForbidden('Not allowed')
+        return HttpResponseForbidden('N\u00e3o autorizado')
 
     form = InventoryQuantityForm()
     if request.method == 'POST':
@@ -194,7 +194,7 @@ def inventory_add_piece_view(request, pk):
                 item.quantity += quantity
                 item.piece_name = piece_label
                 item.save(update_fields=['quantity', 'piece_name', 'updated_at'])
-            messages.success(request, 'Pe\u00e7a adicionada ao inventario.')
+            messages.success(request, 'Pe\u00e7a adicionada ao invent\u00e1rio.')
             return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
@@ -237,7 +237,7 @@ def inventory_filament_delete_view(request, pk):
 
     if request.method == 'POST':
         filament.delete()
-        messages.success(request, 'Filamento removido do inventario.')
+        messages.success(request, 'Filamento removido do inventário.')
         return redirect(f"{reverse('inventory')}?tab=filaments")
 
     return render(
@@ -262,7 +262,7 @@ def inventory_item_edit_view(request, pk):
         if form.is_valid():
             item.quantity = form.cleaned_data['quantity']
             item.save(update_fields=['quantity', 'updated_at'])
-            messages.success(request, 'Inventario atualizado.')
+            messages.success(request, 'Inventário atualizado.')
             return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
@@ -282,7 +282,7 @@ def inventory_item_delete_view(request, pk):
 
     if request.method == 'POST':
         item.delete()
-        messages.success(request, 'Pe\u00e7a removida do inventario.')
+        messages.success(request, 'Pe\u00e7a removida do invent\u00e1rio.')
         return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
@@ -402,7 +402,7 @@ def pieces_list_view(request):
 def piece_edit_view(request, pk: int):
     piece = get_object_or_404(PrintJob.objects.select_related("user"), pk=pk)
     if not piece_permission_check(request.user, piece):
-        return HttpResponseForbidden("Sem permissao.")
+        return HttpResponseForbidden("Sem permissão.")
 
     initial = {
         "piece_name": piece.name,
@@ -457,7 +457,7 @@ def piece_edit_view(request, pk: int):
 def piece_delete_view(request, pk: int):
     piece = get_object_or_404(PrintJob.objects.select_related("user"), pk=pk)
     if not piece_permission_check(request.user, piece):
-        return HttpResponseForbidden("Sem permissao.")
+        return HttpResponseForbidden("Sem permissão.")
 
     if request.method == "POST":
         piece.delete()
