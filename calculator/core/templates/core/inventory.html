@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Inventario{% endblock %}
+{% block title %}Invent&aacute;rio{% endblock %}
 {% block content %}
 <div class="card shadow-sm mb-4">
     <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h1 class="h3 mb-0">Inventario</h1>
+        <h1 class="h3 mb-0">Invent&aacute;rio</h1>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary" href="{% url 'pieces_list' %}">Historico de pecas</a>
+            <a class="btn btn-outline-primary" href="{% url 'pieces_list' %}">Hist&oacute;rico de Pe&ccedil;as</a>
             <a class="btn btn-outline-secondary" href="{% url 'calculator' %}">Abrir calculadora</a>
         </div>
     </div>
@@ -16,7 +16,7 @@
         <a class="nav-link {% if active_tab == 'filaments' %}active{% endif %}" href="{% url 'inventory' %}?tab=filaments">Filamentos</a>
     </li>
     <li class="nav-item" role="presentation">
-        <a class="nav-link {% if active_tab == 'pieces' %}active{% endif %}" href="{% url 'inventory' %}?tab=pieces">Pecas</a>
+        <a class="nav-link {% if active_tab == 'pieces' %}active{% endif %}" href="{% url 'inventory' %}?tab=pieces">Pe&ccedil;as</a>
     </li>
 </ul>
 
@@ -66,10 +66,10 @@
                                         <tr>
                                             <th>Tipo</th>
                                             <th>Cor</th>
-                                            <th>Preco (EUR/kg)</th>
+                                            <th>Pre&ccedil;o (EUR/kg)</th>
                                             <th>Peso (kg)</th>
                                             <th>Data</th>
-                                            <th>Accoes</th>
+                                            <th>A&ccedil;&otilde;es</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -92,7 +92,7 @@
                                 </table>
                             </div>
                         {% else %}
-                            <p class="text-muted mt-3 mb-0">Ainda nao existem filamentos registados.</p>
+                            <p class="text-muted mt-3 mb-0">Ainda n&atilde;o existem filamentos registados.</p>
                         {% endif %}
                     </div>
                 </div>
@@ -103,11 +103,11 @@
     <div class="tab-pane fade {% if active_tab == 'pieces' %}show active{% endif %}" id="tab-pieces" role="tabpanel">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h2 class="h5">Pecas disponiveis</h2>
+                <h2 class="h5">Pe&ccedil;as dispon&iacute;veis</h2>
                 <form class="row g-2 align-items-center mb-3" method="get">
                     <input type="hidden" name="tab" value="pieces">
                     <div class="col-sm-6 col-md-4 col-lg-3">
-                        <input type="text" class="form-control" name="pieces_search" placeholder="Procurar peca no inventario" value="{{ pieces_search }}">
+                        <input type="text" class="form-control" name="pieces_search" placeholder="Procurar pe&ccedil;a no invent&aacute;rio" value="{{ pieces_search }}">
                     </div>
                     <div class="col-auto d-flex gap-2">
                         <button class="btn btn-primary" type="submit">Procurar</button>
@@ -121,11 +121,11 @@
                         <table class="table table-striped align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Peca</th>
+                                    <th>Pe&ccedil;a</th>
                                     <th>Quantidade</th>
                                     <th>Valor (EUR)</th>
-                                    <th>Atualizado</th>
-                                    <th>Accoes</th>
+                                    <th>Actualizado</th>
+                                    <th>A&ccedil;&otilde;es</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,7 +139,7 @@
                                         </td>
                                         <td>{{ item.quantity }}</td>
                                         <td>{% if item.print_job %}{{ item.print_job.price_final }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
-                                        <td>{{ item.updated_at|date:"d/m/Y H:i" }}</td>
+                                         <td>{{ item.updated_at|date:"d/m/Y H:i" }}</td>
                                         <td>
                                             <div class="d-flex gap-2">
                                                 <a class="btn btn-sm btn-outline-primary" href="{% url 'inventory_item_edit' item.pk %}">Editar</a>
@@ -153,9 +153,9 @@
                     </div>
                 {% else %}
                     {% if pieces_search %}
-                        <p class="text-warning mt-3 mb-0">Nenhuma peca corresponde a pesquisa.</p>
+                        <p class="text-warning mt-3 mb-0">Nenhuma pe&ccedil;a corresponde &agrave; pesquisa.</p>
                     {% else %}
-                        <p class="text-muted mt-3 mb-0">Ainda nao existem pecas no inventario.</p>
+                        <p class="text-muted mt-3 mb-0">Ainda n&atilde;o existem pe&ccedil;as no invent&aacute;rio.</p>
                     {% endif %}
                 {% endif %}
             </div>

@@ -23,7 +23,7 @@ FILAMENT_TYPE_CHOICES = [
 
 class PrintJobForm(forms.Form):
     piece_name = forms.CharField(
-        label="Nome da Peca",
+        label="Nome da Pe\u00e7a",
         max_length=100,
         required=False,
     )
@@ -115,7 +115,7 @@ class PrintJobForm(forms.Form):
         if existing_piece is not None:
             qs = qs.exclude(pk=existing_piece.pk)
         if qs.filter(name__iexact=name).exists():
-            raise forms.ValidationError("Ja existe uma peca com este nome.")
+            raise forms.ValidationError("Ja existe uma pe\u00e7a com este nome.")
         return name
 
     def clean_margin_percentage(self):

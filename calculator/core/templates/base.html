@@ -10,7 +10,7 @@
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'dashboard' %}">Calculadora 3D</a>
+        <a class="navbar-brand" href="{% url 'dashboard' %}">Gestor de Impress&otilde;es 3D</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegacao">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -20,7 +20,7 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Menu principal</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'calculator' %}">Calculadora</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'inventory' %}">Inventario</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'pieces_list' %}">Pecas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'pieces_list' %}">Pe&ccedil;as</a></li>
                 {% endif %}
             </ul>
             {% if request.user.is_authenticated %}
@@ -48,3 +48,5 @@
 {% block extra_js %}{% endblock %}
 </body>
 </html>
+
+

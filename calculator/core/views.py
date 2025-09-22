@@ -112,9 +112,9 @@ def logout_view(request):
 def dashboard_view(request):
     links = [
         {'url': 'calculator', 'label': 'Calculadora', 'description': 'Calculadora de custos de impressao 3D.'},
-        {'url': 'pieces_list', 'label': 'Historico de pecas', 'description': 'Consulte, edite e exporte os seus calculos anteriores.'},
-        {'url': 'piece_import', 'label': 'Importar pecas', 'description': 'Carregue um ficheiro Excel para criar pecas em massa.'},
-        {'url': 'inventory', 'label': 'Inventario', 'description': 'Gerir filamentos e pecas disponiveis.'},
+        {'url': 'pieces_list', 'label': 'Historico de pe\u00e7as', 'description': 'Consulte, edite e exporte os seus calculos anteriores.'},
+        {'url': 'piece_import', 'label': 'Importar pe\u00e7as', 'description': 'Carregue um ficheiro Excel para criar pe\u00e7as em massa.'},
+        {'url': 'inventory', 'label': 'Inventario', 'description': 'Gerir filamentos e pe\u00e7as disponiveis.'},
     ]
     return render(request, 'core/dashboard.html', {'links': links})
 
@@ -126,20 +126,15 @@ def inventory_view(request):
         active_tab = 'filaments'
 
     filaments = FilamentType.objects.filter(user=request.user).order_by('name')
-    inventory_items = (
+    inventory_items_qs = (
         InventoryItem.objects.filter(user=request.user)
         .select_related('print_job')
         .order_by('piece_name')
     )
 
     pieces_search = request.GET.get('pieces_search', '').strip()
-    if pieces_search:
-        inventory_items = inventory_items.filter(
-            Q(piece_name__icontains=pieces_search) | Q(print_job__name__icontains=pieces_search)
-        )
-        active_tab = 'pieces'
+    inventory_items_list = list(inventory_items_qs)
 
-    inventory_items_list = list(inventory_items)
     if pieces_search:
         norm_search = normalize_text(pieces_search)
         inventory_items_list = [
@@ -147,9 +142,9 @@ def inventory_view(request):
             for item in inventory_items_list
             if norm_search in normalize_text(item.piece_name or '')
             or (item.print_job and norm_search in normalize_text(item.print_job.name or ''))
+            or (pieces_search.isdigit() and item.print_job and pieces_search == str(item.print_job.pk))
         ]
-    else:
-        inventory_items_list = inventory_items_list
+        active_tab = 'pieces'
 
     filament_form = FilamentTypeForm()
 
@@ -189,7 +184,7 @@ def inventory_add_piece_view(request, pk):
         form = InventoryQuantityForm(request.POST)
         if form.is_valid():
             quantity = form.cleaned_data['quantity']
-            piece_label = piece.name or f'Peca #{piece.pk}'
+            piece_label = piece.name or f'Pe\u00e7a #{piece.pk}'
             item, created = InventoryItem.objects.get_or_create(
                 user=request.user,
                 print_job=piece,
@@ -199,7 +194,7 @@ def inventory_add_piece_view(request, pk):
                 item.quantity += quantity
                 item.piece_name = piece_label
                 item.save(update_fields=['quantity', 'piece_name', 'updated_at'])
-            messages.success(request, 'Peca adicionada ao inventario.')
+            messages.success(request, 'Pe\u00e7a adicionada ao inventario.')
             return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
@@ -287,7 +282,7 @@ def inventory_item_delete_view(request, pk):
 
     if request.method == 'POST':
         item.delete()
-        messages.success(request, 'Peca removida do inventario.')
+        messages.success(request, 'Pe\u00e7a removida do inventario.')
         return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
@@ -332,7 +327,7 @@ def calculator_view(request):
                 consumption_kwh=result["consumption_kwh"],
             )
 
-            result["piece_name"] = print_job.name or f"PeAa #{print_job.pk}"
+            result["piece_name"] = print_job.name or f"Pe\u00e7a #{print_job.pk}"
             result["created_at"] = print_job.created_at
 
             form = PrintJobForm(user=request.user)
@@ -372,9 +367,9 @@ def calculator_view(request):
 def pieces_list_view(request):
     pieces_qs = PrintJob.objects.select_related("user")
     if request.user.is_superuser:
-        pieces = pieces_qs.exclude(inventory_records__isnull=False).distinct()
+        base_queryset = pieces_qs.exclude(inventory_records__isnull=False).distinct()
     else:
-        pieces = (
+        base_queryset = (
             pieces_qs
             .filter(user=request.user)
             .exclude(inventory_records__user=request.user)
@@ -382,13 +377,24 @@ def pieces_list_view(request):
         )
 
     search_query = request.GET.get('search', '').strip()
+    queryset = base_queryset
     if search_query:
         filters = Q(name__icontains=search_query)
         if search_query.isdigit():
             filters |= Q(pk=int(search_query))
-        pieces = pieces.filter(filters).distinct()
+        queryset = queryset.filter(filters).distinct()
 
-    context = {"pieces": pieces, "search_query": search_query}
+    pieces_list = list(queryset)
+    if search_query:
+        norm_query = normalize_text(search_query)
+        pieces_list = [
+            piece
+            for piece in pieces_list
+            if norm_query in normalize_text(piece.name or '')
+            or norm_query in normalize_text(str(piece.pk))
+        ]
+
+    context = {"pieces": pieces_list, "search_query": search_query}
     return render(request, "core/pieces_list.html", context)
 
 
@@ -479,7 +485,7 @@ def piece_export_view(request):
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "PeAas"
+    ws.title = "Pe\u00e7as"
     headers = [
         "piece_name",
         "filament_price_per_kg",
@@ -531,7 +537,7 @@ def piece_export_view(request):
     timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
     response[
         "Content-Disposition"
-    ] = f'attachment; filename="pecas_{timestamp}.xlsx"'
+    ] = f'attachment; filename="pe\u00e7as_{timestamp}.xlsx"'
 
     buffer = io.BytesIO()
     wb.save(buffer)
@@ -564,7 +570,7 @@ def piece_import_view(request):
         if piece_name:
             exists_qs = PrintJob.objects.filter(user=request.user, name__iexact=piece_name)
             if exists_qs.exists():
-                raise ValueError("Ja existe uma peca com este nome.")
+                raise ValueError("Ja existe uma pe\u00e7a com este nome.")
         for key in numeric_fields:
             try:
                 cleaned[key] = parse_decimal(raw_payload.get(key))
