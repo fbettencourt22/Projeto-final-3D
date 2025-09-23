@@ -1,0 +1,40 @@
+<div class="modal fade js-edit-modal" id="pieceEditModal" tabindex="-1" aria-labelledby="pieceEditModalLabel" aria-hidden="true"
+        data-edit-fields='["piece_name","filament_type","filament_weight_g","print_time_hours","labour_time_minutes","margin_percentage"]'
+        data-edit-id-input="#piece-edit-piece-id" data-edit-title-selector=".modal-title-text"
+        data-edit-default-title="Editar pe&ccedil;a"
+        data-open-pk="{{ piece_edit_open_pk|default:'' }}"
+        data-has-errors="{% if piece_edit_form.errors %}true{% else %}false{% endif %}">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            {% with action_name=piece_edit_action|default:'pieces_list' %}
+            <form method="post" action="{% url action_name %}" novalidate>
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="pieceEditModalLabel">
+                        <span class="modal-title-text">Editar peça</span>
+                    </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="piece_id" id="piece-edit-piece-id" value="{{ piece_edit_open_pk|default:'' }}">
+                    <input type="hidden" name="next" value="{{ piece_edit_next_url }}">
+                    {% if piece_edit_form.non_field_errors %}
+                        <div class="alert alert-danger small" data-edit-error>
+                            {% for error in piece_edit_form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="row g-3">
+                        {% include "core/includes/form_fields.html" with form=piece_edit_form %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+            {% endwith %}
+        </div>
+    </div>
+</div>

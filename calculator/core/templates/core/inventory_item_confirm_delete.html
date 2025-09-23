@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Apagar do invent&aacute;rio{% endblock %}
+{% block title %}Apagar do inventário{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-6">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h1 class="h4 mb-3">Remover pe&ccedil;a do invent&aacute;rio</h1>
-                <p>Tem a certeza que deseja remover <strong>{{ item.piece_name }}</strong> do invent&aacute;rio?</p>
+                <h1 class="h4 mb-3">Remover peça do inventário</h1>
+                <p>Tem a certeza que deseja remover <strong>{{ item.piece_name }}</strong> do inventário?</p>
                 <form method="post">
                     {% csrf_token %}
                     <div class="d-flex gap-2">

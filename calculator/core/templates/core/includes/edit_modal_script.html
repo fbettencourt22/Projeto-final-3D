@@ -1,0 +1,121 @@
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined') {
+        return;
+    }
+    var modals = document.querySelectorAll('.js-edit-modal');
+    modals.forEach(function (modalEl) {
+        var form = modalEl.querySelector('form');
+        if (!form) {
+            return;
+        }
+        var fieldsAttr = modalEl.getAttribute('data-edit-fields') || '[]';
+        var fieldNames;
+        try {
+            fieldNames = JSON.parse(fieldsAttr);
+        } catch (err) {
+            fieldNames = [];
+        }
+        if (!Array.isArray(fieldNames)) {
+            fieldNames = [];
+        }
+
+        var hiddenIdSelector = modalEl.getAttribute('data-edit-id-input');
+        var hiddenIdInput = hiddenIdSelector ? modalEl.querySelector(hiddenIdSelector) : null;
+        var titleSelector = modalEl.getAttribute('data-edit-title-selector') || '.modal-title-text';
+        var titleNode = titleSelector ? modalEl.querySelector(titleSelector) : null;
+        var defaultTitle = modalEl.getAttribute('data-edit-default-title');
+        if (!defaultTitle && titleNode) {
+            defaultTitle = titleNode.textContent || '';
+        }
+        var openPk = modalEl.getAttribute('data-open-pk') || '';
+        var hasErrors = modalEl.getAttribute('data-has-errors') === 'true';
+
+        modalEl.addEventListener('show.bs.modal', function (event) {
+            var trigger = event.relatedTarget;
+            if (!trigger) {
+                return;
+            }
+
+            form.reset();
+            form.querySelectorAll('[data-edit-error]').forEach(function (node) {
+                node.remove();
+            });
+
+            if (hiddenIdInput) {
+                hiddenIdInput.value = trigger.getAttribute('data-edit-id') || '';
+            }
+
+            var payloadRaw = trigger.getAttribute('data-edit-payload');
+            var payload = {};
+            if (payloadRaw) {
+                try {
+                    payload = JSON.parse(payloadRaw);
+                } catch (err) {
+                    payload = {};
+                }
+            }
+
+            fieldNames.forEach(function (name) {
+                var field = form.elements.namedItem(name);
+                if (!field) {
+                    return;
+                }
+                var value = Object.prototype.hasOwnProperty.call(payload, name) ? payload[name] : '';
+                if (field.tagName === 'SELECT') {
+                    var hasOption = Array.from(field.options).some(function (option) {
+                        return option.value === value;
+                    });
+                    field.value = hasOption ? value : '';
+                } else if (field.type === 'checkbox' || field.type === 'radio') {
+                    if (Array.isArray(value)) {
+                        value.forEach(function (val) {
+                            var option = form.querySelector('[name="' + field.name + '"][value="' + val + '"]');
+                            if (option) {
+                                option.checked = true;
+                            }
+                        });
+                    } else {
+                        field.checked = Boolean(value);
+                    }
+                } else {
+                    field.value = value;
+                }
+            });
+
+            if (titleNode) {
+                titleNode.textContent = trigger.getAttribute('data-edit-label') || defaultTitle || '';
+            }
+        });
+
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            form.reset();
+            form.querySelectorAll('[data-edit-error]').forEach(function (node) {
+                node.remove();
+            });
+            if (hiddenIdInput) {
+                hiddenIdInput.value = '';
+            }
+            if (titleNode) {
+                titleNode.textContent = defaultTitle || '';
+            }
+        });
+
+        if (hasErrors && openPk) {
+            var instanceWithErrors = bootstrap.Modal.getOrCreateInstance(modalEl);
+            instanceWithErrors.show();
+            return;
+        }
+
+        if (openPk) {
+            var triggerSelector = '[data-bs-target="#' + modalEl.id + '"][data-edit-id="' + openPk.replace(/"/g, '\\"') + '"]';
+            var trigger = document.querySelector(triggerSelector);
+            if (trigger) {
+                window.setTimeout(function () {
+                    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                }, 0);
+            }
+        }
+    });
+});
+</script>

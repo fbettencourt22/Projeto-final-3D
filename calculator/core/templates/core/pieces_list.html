@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Listagem de Pe&ccedil;as{% endblock %}
+{% block title %}Listagem de Peças{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-body">
-        <h1 class="h3 mb-4">Pe&ccedil;as registadas</h1>
+        <h1 class="h3 mb-4">Peças registadas</h1>
         <div class="mb-3 d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar &agrave; calculadora</a>
+            <a class="btn btn-outline-primary" href="{% url 'calculator' %}">Voltar à calculadora</a>
             <a class="btn btn-outline-success" href="{% url 'piece_export' %}">Exportar Excel</a>
             <a class="btn btn-outline-secondary" href="{% url 'piece_import' %}">Importar Excel</a>
-            <a class="btn btn-outline-dark" href="{% url 'inventory' %}">Abrir invent&aacute;rio</a>
+            <a class="btn btn-outline-dark" href="{% url 'inventory' %}">Abrir inventário</a>
         </div>
         <form class="row g-2 align-items-center mb-3" method="get">
             <div class="col-sm-6 col-md-4 col-lg-3">
-                <input type="text" class="form-control" name="search" placeholder="Procurar pe&ccedil;a" value="{{ search_query }}">
+                <input type="text" class="form-control" name="search" placeholder="Procurar peça" value="{{ search_query }}">
             </div>
             <div class="col-auto d-flex gap-2">
                 <button class="btn btn-primary" type="submit">Procurar</button>
@@ -26,27 +26,27 @@
                 <table class="table table-striped align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Pe&ccedil;a</th>
+                            <th>Peça</th>
                             <th>Filamento (g)</th>
                             <th>Tempo (h)</th>
                             <th>Margem (%)</th>
                             <th>Custo Filamento (EUR)</th>
                             <th>Custo Energia (EUR)</th>
-                            <th>Custo M&atilde;o de Obra (EUR)</th>
-                            <th>Custo M&aacute;quina (EUR)</th>
+                            <th>Custo Mão de Obra (EUR)</th>
+                            <th>Custo Máquina (EUR)</th>
                             <th>Custo Total (EUR)</th>
-                            <th>Pre&ccedil;o Final (EUR)</th>
+                            <th>Preço Final (EUR)</th>
                             <th>Data</th>
                             {% if request.user.is_superuser %}
                                 <th>Utilizador</th>
                             {% endif %}
-                            <th>A&ccedil;&otilde;es</th>
+                            <th>Aç&otilde;es</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for piece in pieces %}
                             <tr>
-                                <td>{% if piece.name %}{{ piece.name }}{% else %}Pe&ccedil;a #{{ piece.pk }}{% endif %}</td>
+                                <td>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</td>
                                 <td>{{ piece.filament_weight_g }}</td>
                                 <td>{{ piece.print_time_hours }}</td>
                                 <td>{{ piece.margin_percentage }}</td>
@@ -63,8 +63,8 @@
                                 <td>
                                     {% if request.user.is_superuser or piece.user == request.user %}
                                         <div class="d-flex gap-2">
-                                            <a class="btn btn-sm btn-outline-success" href="{% url 'inventory_add_piece' piece.pk %}">Enviar para invent&aacute;rio</a>
-                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'piece_edit' piece.pk %}">Editar</a>
+                                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para invent&aacute;rio</button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary piece-edit-trigger" data-bs-toggle="modal" data-bs-target="#pieceEditModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.edit_payload|escape }}">Editar</button>
                                             <a class="btn btn-sm btn-outline-danger" href="{% url 'piece_delete' piece.pk %}">Apagar</a>
                                         </div>
                                     {% else %}
@@ -78,11 +78,17 @@
             </div>
         {% else %}
             {% if search_query %}
-                <div class="alert alert-warning">Nenhuma pe&ccedil;a corresponde &agrave; pesquisa.</div>
+                <div class="alert alert-warning">Nenhuma peça corresponde à; pesquisa.</div>
             {% else %}
-                <div class="alert alert-info">Ainda n&atilde;o existem pe&ccedil;as registadas.</div>
+                <div class="alert alert-info">Ainda não existem peças registadas.</div>
             {% endif %}
         {% endif %}
     </div>
 </div>
+{% include "core/includes/piece_edit_modal.html" with piece_edit_action='pieces_list' %}
+{% include "core/includes/inventory_add_modal.html" with inventory_add_action=inventory_add_action %}
+{% endblock %}
+
+{% block extra_js %}
+    {% include "core/includes/edit_modal_script.html" %}
 {% endblock %}

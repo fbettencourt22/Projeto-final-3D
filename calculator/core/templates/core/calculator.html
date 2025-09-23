@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Calculadora{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
@@ -38,7 +38,7 @@
                 {% if result %}
                     <div class="table-responsive mt-4">
                         <table class="table table-striped align-middle">
-                            <caption>Resultado da última peça</caption>
+                            <caption>Resultado da Ultima peça</caption>
                             <tbody>
                                 <tr><th scope="row">Peca</th><td>{{ result.piece_name }}</td></tr>
                                 {% if result.filament_name %}
@@ -117,7 +117,8 @@
                                         <td>
                                             {% if request.user.is_superuser or piece.user == request.user %}
                                                 <div class="d-flex gap-2">
-                                                    <a class="btn btn-sm btn-outline-primary" href="{% url 'piece_edit' piece.pk %}">Editar</a>
+                                                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para invent&aacute;rio</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary piece-edit-trigger" data-bs-toggle="modal" data-bs-target="#pieceEditModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.edit_payload|escape }}">Editar</button>
                                                     <a class="btn btn-sm btn-outline-danger" href="{% url 'piece_delete' piece.pk %}">Apagar</a>
                                                 </div>
                                             {% else %}
@@ -136,4 +137,10 @@
         </div>
     </div>
 </div>
+{% include "core/includes/piece_edit_modal.html" with piece_edit_action='calculator' %}
+{% include "core/includes/inventory_add_modal.html" with inventory_add_action=inventory_add_action %}
+{% endblock %}
+
+{% block extra_js %}
+    {% include "core/includes/edit_modal_script.html" %}
 {% endblock %}
