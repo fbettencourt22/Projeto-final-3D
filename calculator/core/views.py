@@ -14,7 +14,12 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Q
 
-from .forms import FilamentTypeForm, InventoryQuantityForm, PieceImportForm, PrintJobForm
+from .forms import (
+    FilamentTypeForm,
+    InventoryQuantityForm,
+    PieceImportForm,
+    PrintJobForm,
+)
 from .models import FilamentType, InventoryItem, PrintJob
 
 VALOR_KWH = Decimal("0.158")
@@ -69,8 +74,6 @@ def calculate_print_job(data: dict) -> dict:
     }
 
 
-
-
 def get_piece_initial_data(piece: PrintJob, user) -> dict:
     initial = {
         "piece_name": piece.name,
@@ -117,7 +120,7 @@ def serialize_piece_edit_payload(piece: PrintJob, user) -> str:
 
 
 def get_filament_label(filament: FilamentType) -> str:
-    color = (filament.color or '').strip()
+    color = (filament.color or "").strip()
     if color:
         return f"{filament.name} ({color})"
     return filament.name
@@ -128,7 +131,9 @@ def serialize_filament_edit_payload(filament: FilamentType) -> str:
         "pk": filament.pk,
         "name": filament.name or "",
         "color": filament.color or "",
-        "price_per_kg": "" if filament.price_per_kg is None else str(filament.price_per_kg),
+        "price_per_kg": (
+            "" if filament.price_per_kg is None else str(filament.price_per_kg)
+        ),
         "weight_kg": "" if filament.weight_kg is None else str(filament.weight_kg),
         "label": get_filament_label(filament),
     }
@@ -136,13 +141,18 @@ def serialize_filament_edit_payload(filament: FilamentType) -> str:
 
 
 def serialize_inventory_item_edit_payload(item: InventoryItem) -> str:
-    label_source = item.piece_name or (item.print_job.name if getattr(item, 'print_job', None) and item.print_job.name else '')
+    label_source = item.piece_name or (
+        item.print_job.name
+        if getattr(item, "print_job", None) and item.print_job.name
+        else ""
+    )
     payload = {
         "pk": item.pk,
         "quantity": str(item.quantity or 0),
         "label": label_source or f"Item #{item.pk}",
     }
     return json.dumps(payload, ensure_ascii=False)
+
 
 def serialize_inventory_add_payload(piece: PrintJob) -> str:
     payload = {
@@ -165,7 +175,6 @@ def add_piece_to_inventory(user, piece: PrintJob, quantity: int):
         item.piece_name = piece_label
         item.save(update_fields=["quantity", "piece_name", "updated_at"])
     return item, created, piece_label
-
 
 
 def update_piece_from_form(piece: PrintJob, cleaned_data: dict, request_user) -> None:
@@ -206,9 +215,9 @@ def get_safe_redirect(request, default_url: str) -> str:
 
 def normalize_text(value: str) -> str:
     if not value:
-        return ''
-    normalized = unicodedata.normalize('NFKD', value)
-    stripped = ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+        return ""
+    normalized = unicodedata.normalize("NFKD", value)
+    stripped = "".join(ch for ch in normalized if not unicodedata.combining(ch))
     return stripped.lower()
 
 
@@ -228,9 +237,6 @@ def parse_decimal(value):
         raise ValueError(f"valor invAlido: {value}") from exc
 
 
-
-
-
 def piece_permission_check(user, piece: PrintJob):
     if user.is_superuser:
         return True
@@ -246,46 +252,73 @@ def logout_view(request):
 @login_required
 def dashboard_view(request):
     links = [
-        {'url': 'calculator', 'label': 'Calculadora', 'description': 'Calculadora de custos de impressão 3D.'},
-        {'url': 'pieces_list', 'label': 'Pe\u00e7as inseridas', 'description': 'Consulte, edite e exporte os seus cálculos anteriores.'},
-        {'url': 'piece_import', 'label': 'Importar pe\u00e7as', 'description': 'Carregue um ficheiro Excel para criar pe\u00e7as em massa.'},
-        {'url': 'inventory', 'label': 'Inventário', 'description': 'Gerir filamentos e pe\u00e7as disponíveis.'},
+        {
+            "url": "calculator",
+            "label": "Calculadora",
+            "description": "Calculadora de custos de impressão 3D.",
+        },
+        {
+            "url": "pieces_list",
+            "label": "Pe\u00e7as inseridas",
+            "description": "Consulte, edite e exporte os seus cálculos anteriores.",
+        },
+        {
+            "url": "piece_import",
+            "label": "Importar pe\u00e7as",
+            "description": "Carregue um ficheiro Excel para criar pe\u00e7as em massa.",
+        },
+        {
+            "url": "inventory",
+            "label": "Inventário",
+            "description": "Gerir filamentos e pe\u00e7as disponíveis.",
+        },
     ]
-    return render(request, 'core/dashboard.html', {'links': links})
+    return render(request, "core/dashboard.html", {"links": links})
 
 
 @login_required
 def inventory_view(request):
-    active_tab = request.GET.get('tab', 'filaments')
-    if active_tab not in {'filaments', 'pieces'}:
-        active_tab = 'filaments'
+    active_tab = request.GET.get("tab", "filaments")
+    if active_tab not in {"filaments", "pieces"}:
+        active_tab = "filaments"
 
-    filament_base_qs = FilamentType.objects.all() if request.user.is_superuser else FilamentType.objects.filter(user=request.user)
-    filaments = list(filament_base_qs.order_by('name'))
+    filament_base_qs = (
+        FilamentType.objects.all()
+        if request.user.is_superuser
+        else FilamentType.objects.filter(user=request.user)
+    )
+    filaments = list(filament_base_qs.order_by("name"))
 
     inventory_items_qs = (
         InventoryItem.objects.filter(user=request.user)
-        .select_related('print_job')
-        .order_by('piece_name')
+        .select_related("print_job")
+        .order_by("piece_name")
     )
     inventory_items_list = list(inventory_items_qs)
 
-    pieces_search = request.GET.get('pieces_search', '').strip()
+    pieces_search = request.GET.get("pieces_search", "").strip()
 
     if pieces_search:
         norm_search = normalize_text(pieces_search)
         inventory_items_list = [
             item
             for item in inventory_items_list
-            if norm_search in normalize_text(item.piece_name or '')
-            or (item.print_job and norm_search in normalize_text(item.print_job.name or ''))
-            or (pieces_search.isdigit() and item.print_job and pieces_search == str(item.print_job.pk))
+            if norm_search in normalize_text(item.piece_name or "")
+            or (
+                item.print_job
+                and norm_search in normalize_text(item.print_job.name or "")
+            )
+            or (
+                pieces_search.isdigit()
+                and item.print_job
+                and pieces_search == str(item.print_job.pk)
+            )
         ]
-        active_tab = 'pieces'
+        active_tab = "pieces"
 
     def build_next_url(tab_name: str, exclude_key: str) -> str:
         query_params = request.GET.copy()
-        query_params['tab'] = tab_name
+        query_params["tab"] = tab_name
         query_params.pop(exclude_key, None)
         if query_params:
             return f"{request.path}?{query_params.urlencode()}"
@@ -300,58 +333,64 @@ def inventory_view(request):
     inventory_item_edit_open_pk = None
     inventory_item_edit_next_url = request.get_full_path()
 
-    action = request.POST.get('action') if request.method == 'POST' else None
-    if action == 'add_filament':
+    action = request.POST.get("action") if request.method == "POST" else None
+    if action == "add_filament":
         filament_form = FilamentTypeForm(request.POST)
         if filament_form.is_valid():
             filament = filament_form.save(commit=False)
             filament.user = request.user
             filament.save()
-            messages.success(request, 'Filamento guardado no invent\u00e1rio.')
+            messages.success(request, "Filamento guardado no invent\u00e1rio.")
             return redirect(f"{reverse('inventory')}?tab=filaments")
-        active_tab = 'filaments'
-    elif action == 'edit_filament':
-        active_tab = 'filaments'
-        filament_pk = request.POST.get('filament_id')
+        active_tab = "filaments"
+    elif action == "edit_filament":
+        active_tab = "filaments"
+        filament_pk = request.POST.get("filament_id")
         filament = get_object_or_404(filament_base_qs, pk=filament_pk)
         filament_edit_form = FilamentTypeForm(request.POST, instance=filament)
         if filament_edit_form.is_valid():
             filament_edit_form.save()
-            messages.success(request, 'Filamento atualizado.')
+            messages.success(request, "Filamento atualizado.")
             target = get_safe_redirect(request, f"{reverse('inventory')}?tab=filaments")
             return redirect(target)
         filament_edit_open_pk = str(filament.pk)
-        filament_edit_next_url = request.POST.get('next') or build_next_url('filaments', 'open_filament_edit')
-    elif action == 'edit_inventory_item':
-        active_tab = 'pieces'
-        item_pk = request.POST.get('item_id')
+        filament_edit_next_url = request.POST.get("next") or build_next_url(
+            "filaments", "open_filament_edit"
+        )
+    elif action == "edit_inventory_item":
+        active_tab = "pieces"
+        item_pk = request.POST.get("item_id")
         item = get_object_or_404(inventory_items_qs, pk=item_pk)
         inventory_item_edit_form = InventoryQuantityForm(request.POST)
         if inventory_item_edit_form.is_valid():
-            item.quantity = inventory_item_edit_form.cleaned_data['quantity']
-            item.save(update_fields=['quantity', 'updated_at'])
-            messages.success(request, 'Invent\u00e1rio atualizado.')
+            item.quantity = inventory_item_edit_form.cleaned_data["quantity"]
+            item.save(update_fields=["quantity", "updated_at"])
+            messages.success(request, "Invent\u00e1rio atualizado.")
             target = get_safe_redirect(request, f"{reverse('inventory')}?tab=pieces")
             return redirect(target)
         inventory_item_edit_open_pk = str(item.pk)
-        inventory_item_edit_next_url = request.POST.get('next') or build_next_url('pieces', 'open_inventory_item_edit')
+        inventory_item_edit_next_url = request.POST.get("next") or build_next_url(
+            "pieces", "open_inventory_item_edit"
+        )
 
-    if action != 'edit_filament':
-        filament_edit_next_url = build_next_url('filaments', 'open_filament_edit')
-    if action != 'edit_inventory_item':
-        inventory_item_edit_next_url = build_next_url('pieces', 'open_inventory_item_edit')
+    if action != "edit_filament":
+        filament_edit_next_url = build_next_url("filaments", "open_filament_edit")
+    if action != "edit_inventory_item":
+        inventory_item_edit_next_url = build_next_url(
+            "pieces", "open_inventory_item_edit"
+        )
 
     if filament_edit_open_pk is None:
-        open_filament_pk = request.GET.get('open_filament_edit')
+        open_filament_pk = request.GET.get("open_filament_edit")
         if open_filament_pk and filament_base_qs.filter(pk=open_filament_pk).exists():
             filament_edit_open_pk = open_filament_pk
-            active_tab = 'filaments'
+            active_tab = "filaments"
 
     if inventory_item_edit_open_pk is None:
-        open_item_pk = request.GET.get('open_inventory_item_edit')
+        open_item_pk = request.GET.get("open_inventory_item_edit")
         if open_item_pk and inventory_items_qs.filter(pk=open_item_pk).exists():
             inventory_item_edit_open_pk = open_item_pk
-            active_tab = 'pieces'
+            active_tab = "pieces"
 
     for filament in filaments:
         filament.edit_payload = serialize_filament_edit_payload(filament)
@@ -363,19 +402,19 @@ def inventory_view(request):
 
     return render(
         request,
-        'core/inventory.html',
+        "core/inventory.html",
         {
-            'filament_form': filament_form,
-            'filaments': filaments,
-            'inventory_items': inventory_items_list,
-            'active_tab': active_tab,
-            'pieces_search': pieces_search,
-            'filament_edit_form': filament_edit_form,
-            'filament_edit_open_pk': filament_edit_open_pk,
-            'filament_edit_next_url': filament_edit_next_url,
-            'inventory_item_edit_form': inventory_item_edit_form,
-            'inventory_item_edit_open_pk': inventory_item_edit_open_pk,
-            'inventory_item_edit_next_url': inventory_item_edit_next_url,
+            "filament_form": filament_form,
+            "filaments": filaments,
+            "inventory_items": inventory_items_list,
+            "active_tab": active_tab,
+            "pieces_search": pieces_search,
+            "filament_edit_form": filament_edit_form,
+            "filament_edit_open_pk": filament_edit_open_pk,
+            "filament_edit_next_url": filament_edit_next_url,
+            "inventory_item_edit_form": inventory_item_edit_form,
+            "inventory_item_edit_open_pk": inventory_item_edit_open_pk,
+            "inventory_item_edit_next_url": inventory_item_edit_next_url,
         },
     )
 
@@ -384,31 +423,41 @@ def inventory_view(request):
 def inventory_add_piece_view(request, pk):
     piece = get_object_or_404(PrintJob, pk=pk)
     if not piece_permission_check(request.user, piece):
-        return HttpResponseForbidden('Nao autorizado')
+        return HttpResponseForbidden("Nao autorizado")
 
     form = InventoryQuantityForm()
-    if request.method == 'POST':
+    if request.method == "POST":
         form = InventoryQuantityForm(request.POST)
         if form.is_valid():
-            quantity = form.cleaned_data['quantity']
-            _, created, piece_label = add_piece_to_inventory(request.user, piece, quantity)
-            message = 'Peca adicionada ao inventario.' if created else 'Quantidade atualizada no inventario.'
+            quantity = form.cleaned_data["quantity"]
+            _, created, piece_label = add_piece_to_inventory(
+                request.user, piece, quantity
+            )
+            message = (
+                "Peca adicionada ao inventario."
+                if created
+                else "Quantidade atualizada no inventario."
+            )
             messages.success(request, message)
             return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
         request,
-        'core/inventory_add_piece.html',
+        "core/inventory_add_piece.html",
         {
-            'form': form,
-            'piece': piece,
+            "form": form,
+            "piece": piece,
         },
     )
 
 
 @login_required
 def inventory_filament_edit_view(request, pk):
-    qs = FilamentType.objects.all() if request.user.is_superuser else FilamentType.objects.filter(user=request.user)
+    qs = (
+        FilamentType.objects.all()
+        if request.user.is_superuser
+        else FilamentType.objects.filter(user=request.user)
+    )
     filament = get_object_or_404(qs, pk=pk)
     target = f"{reverse('inventory')}?tab=filaments&open_filament_edit={filament.pk}"
     return redirect(target)
@@ -416,26 +465,30 @@ def inventory_filament_edit_view(request, pk):
 
 @login_required
 def inventory_filament_delete_view(request, pk):
-    qs = FilamentType.objects.all() if request.user.is_superuser else FilamentType.objects.filter(user=request.user)
+    qs = (
+        FilamentType.objects.all()
+        if request.user.is_superuser
+        else FilamentType.objects.filter(user=request.user)
+    )
     filament = get_object_or_404(qs, pk=pk)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         filament.delete()
-        messages.success(request, 'Filamento removido do inventário.')
+        messages.success(request, "Filamento removido do inventário.")
         return redirect(f"{reverse('inventory')}?tab=filaments")
 
     return render(
         request,
-        'core/inventory_filament_confirm_delete.html',
+        "core/inventory_filament_confirm_delete.html",
         {
-            'filament': filament,
+            "filament": filament,
         },
     )
 
 
 @login_required
 def inventory_item_edit_view(request, pk):
-    qs = InventoryItem.objects.select_related('print_job')
+    qs = InventoryItem.objects.select_related("print_job")
     if not request.user.is_superuser:
         qs = qs.filter(user=request.user)
     item = get_object_or_404(qs, pk=pk)
@@ -445,19 +498,23 @@ def inventory_item_edit_view(request, pk):
 
 @login_required
 def inventory_item_delete_view(request, pk):
-    qs = InventoryItem.objects.all() if request.user.is_superuser else InventoryItem.objects.filter(user=request.user)
+    qs = (
+        InventoryItem.objects.all()
+        if request.user.is_superuser
+        else InventoryItem.objects.filter(user=request.user)
+    )
     item = get_object_or_404(qs, pk=pk)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         item.delete()
-        messages.success(request, 'Pe\u00e7a removida do invent\u00e1rio.')
+        messages.success(request, "Pe\u00e7a removida do invent\u00e1rio.")
         return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
         request,
-        'core/inventory_item_confirm_delete.html',
+        "core/inventory_item_confirm_delete.html",
         {
-            'item': item,
+            "item": item,
         },
     )
 
@@ -479,25 +536,41 @@ def calculator_view(request):
         if action == "add_to_inventory":
             inventory_add_form = InventoryQuantityForm(request.POST)
             piece_id = request.POST.get("piece_id")
-            piece = get_object_or_404(PrintJob.objects.select_related("user"), pk=piece_id)
+            piece = get_object_or_404(
+                PrintJob.objects.select_related("user"), pk=piece_id
+            )
             if not piece_permission_check(request.user, piece):
                 return HttpResponseForbidden("Sem permissao.")
             if inventory_add_form.is_valid():
                 quantity = inventory_add_form.cleaned_data["quantity"]
-                _, _, piece_label = add_piece_to_inventory(request.user, piece, quantity)
-                messages.success(request, f"Peca '{piece_label}' enviada para o inventario.")
-                return redirect(get_safe_redirect(request, request.POST.get("next") or reverse("calculator")))
+                _, _, piece_label = add_piece_to_inventory(
+                    request.user, piece, quantity
+                )
+                messages.success(
+                    request, f"Peca '{piece_label}' enviada para o inventario."
+                )
+                return redirect(
+                    get_safe_redirect(
+                        request, request.POST.get("next") or reverse("calculator")
+                    )
+                )
             inventory_add_open_pk = str(piece.pk)
             inventory_add_next_url = request.POST.get("next") or request.get_full_path()
         else:
             piece_id = request.POST.get("piece_id")
             if piece_id:
-                piece = get_object_or_404(PrintJob.objects.select_related("user"), pk=piece_id)
+                piece = get_object_or_404(
+                    PrintJob.objects.select_related("user"), pk=piece_id
+                )
                 if not piece_permission_check(request.user, piece):
                     return HttpResponseForbidden("Sem permissao.")
-                piece_edit_form = PrintJobForm(request.POST, user=request.user, existing_piece=piece)
+                piece_edit_form = PrintJobForm(
+                    request.POST, user=request.user, existing_piece=piece
+                )
                 if piece_edit_form.is_valid():
-                    update_piece_from_form(piece, piece_edit_form.cleaned_data, request.user)
+                    update_piece_from_form(
+                        piece, piece_edit_form.cleaned_data, request.user
+                    )
                     messages.success(request, "Peca atualizada.")
                     return redirect(get_safe_redirect(request, reverse("calculator")))
                 piece_edit_open_pk = str(piece.pk)
@@ -546,8 +619,7 @@ def calculator_view(request):
         pieces_queryset = pieces_qs.exclude(inventory_records__isnull=False).distinct()
     else:
         pieces_queryset = (
-            pieces_qs
-            .filter(user=request.user)
+            pieces_qs.filter(user=request.user)
             .exclude(inventory_records__user=request.user)
             .distinct()
         )
@@ -571,7 +643,11 @@ def calculator_view(request):
 
     has_filaments = form.fields["filament_type"].queryset.exists()
 
-    if request.method == "POST" and request.POST.get("piece_id") and action != "add_to_inventory":
+    if (
+        request.method == "POST"
+        and request.POST.get("piece_id")
+        and action != "add_to_inventory"
+    ):
         piece_edit_next_url = request.POST.get("next") or request.get_full_path()
     else:
         piece_edit_next_url = request.get_full_path()
@@ -613,8 +689,7 @@ def pieces_list_view(request):
         base_queryset = pieces_qs.exclude(inventory_records__isnull=False).distinct()
     else:
         base_queryset = (
-            pieces_qs
-            .filter(user=request.user)
+            pieces_qs.filter(user=request.user)
             .exclude(inventory_records__user=request.user)
             .distinct()
         )
@@ -636,9 +711,15 @@ def pieces_list_view(request):
                 return HttpResponseForbidden("Sem permissao.")
             if inventory_add_form.is_valid():
                 quantity = inventory_add_form.cleaned_data["quantity"]
-                _, _, piece_label = add_piece_to_inventory(request.user, piece, quantity)
-                messages.success(request, f"Peca '{piece_label}' enviada para o inventario.")
-                redirect_target = get_safe_redirect(request, request.POST.get("next") or reverse("pieces_list"))
+                _, _, piece_label = add_piece_to_inventory(
+                    request.user, piece, quantity
+                )
+                messages.success(
+                    request, f"Peca '{piece_label}' enviada para o inventario."
+                )
+                redirect_target = get_safe_redirect(
+                    request, request.POST.get("next") or reverse("pieces_list")
+                )
                 return redirect(redirect_target)
             inventory_add_open_pk = str(piece.pk)
             inventory_add_next_url = request.POST.get("next") or request.get_full_path()
@@ -646,7 +727,9 @@ def pieces_list_view(request):
             piece = get_object_or_404(pieces_qs, pk=request.POST.get("piece_id"))
             if not piece_permission_check(request.user, piece):
                 return HttpResponseForbidden("Sem permissao.")
-            edit_form = PrintJobForm(request.POST, user=request.user, existing_piece=piece)
+            edit_form = PrintJobForm(
+                request.POST, user=request.user, existing_piece=piece
+            )
             if edit_form.is_valid():
                 update_piece_from_form(piece, edit_form.cleaned_data, request.user)
                 messages.success(request, "Peca atualizada.")
@@ -688,7 +771,11 @@ def pieces_list_view(request):
                 if piece_permission_check(request.user, piece):
                     active_piece_pk = str(piece.pk)
 
-    if request.method == "POST" and request.POST.get("piece_id") and request.POST.get("action") != "add_to_inventory":
+    if (
+        request.method == "POST"
+        and request.POST.get("piece_id")
+        and request.POST.get("action") != "add_to_inventory"
+    ):
         piece_edit_next_url = request.POST.get("next") or reverse("pieces_list")
     else:
         query_params = request.GET.copy()
@@ -697,12 +784,16 @@ def pieces_list_view(request):
         if query_params:
             piece_edit_next_url = f"{piece_edit_next_url}?{query_params.urlencode()}"
 
-    if not (request.method == "POST" and request.POST.get("action") == "add_to_inventory"):
+    if not (
+        request.method == "POST" and request.POST.get("action") == "add_to_inventory"
+    ):
         query_params = request.GET.copy()
         query_params.pop("open_edit", None)
         inventory_add_next_url = request.path
         if query_params:
-            inventory_add_next_url = f"{inventory_add_next_url}?{query_params.urlencode()}"
+            inventory_add_next_url = (
+                f"{inventory_add_next_url}?{query_params.urlencode()}"
+            )
 
     context = {
         "pieces": pieces_list,
@@ -717,6 +808,7 @@ def pieces_list_view(request):
     }
     return render(request, "core/pieces_list.html", context)
 
+
 @login_required
 def piece_edit_view(request, pk: int):
     piece = get_object_or_404(PrintJob.objects.select_related("user"), pk=pk)
@@ -724,6 +816,7 @@ def piece_edit_view(request, pk: int):
         return HttpResponseForbidden("Sem permissao.")
     target = f"{reverse('pieces_list')}?open_edit={piece.pk}"
     return redirect(target)
+
 
 @login_required
 def piece_delete_view(request, pk: int):
@@ -738,8 +831,6 @@ def piece_delete_view(request, pk: int):
     return render(request, "core/piece_confirm_delete.html", {"piece": piece})
 
 
-
-
 @login_required
 def piece_export_view(request):
     pieces = PrintJob.objects.select_related("user")
@@ -747,7 +838,7 @@ def piece_export_view(request):
         pieces = pieces.filter(user=request.user)
 
     try:
-        from openpyxl import Workbook  # type: ignore
+        from openpyxl import Workbook
     except ImportError:
         messages.error(
             request,
@@ -807,16 +898,15 @@ def piece_export_view(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-    response[
-        "Content-Disposition"
-    ] = f'attachment; filename="pe\u00e7as_{timestamp}.xlsx"'
+    response["Content-Disposition"] = (
+        f'attachment; filename="pe\u00e7as_{timestamp}.xlsx"'
+    )
 
     buffer = io.BytesIO()
     wb.save(buffer)
     buffer.seek(0)
     response.write(buffer.getvalue())
     return response
-
 
 
 @login_required
@@ -840,7 +930,9 @@ def piece_import_view(request):
         }
         piece_name = cleaned["piece_name"]
         if piece_name:
-            exists_qs = PrintJob.objects.filter(user=request.user, name__iexact=piece_name)
+            exists_qs = PrintJob.objects.filter(
+                user=request.user, name__iexact=piece_name
+            )
             if exists_qs.exists():
                 raise ValueError("Ja existe uma pe\u00e7a com este nome.")
         for key in numeric_fields:
@@ -879,10 +971,12 @@ def piece_import_view(request):
             ext = Path(uploaded.name or "").suffix.lower()
 
             if ext != ".xlsx":
-                errors.append("Formato nAo suportado. Utilize um ficheiro Excel (.xlsx).")
+                errors.append(
+                    "Formato nAo suportado. Utilize um ficheiro Excel (.xlsx)."
+                )
             else:
                 try:
-                    from openpyxl import load_workbook  # type: ignore
+                    from openpyxl import load_workbook
                 except ImportError:
                     errors.append(
                         "Suporte a Excel indisponAvel (biblioteca openpyxl nAo instalada)."
@@ -892,7 +986,7 @@ def piece_import_view(request):
                         uploaded.seek(0)
                         workbook = load_workbook(uploaded, data_only=True)
                         sheet = workbook.active
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         errors.append(f"Erro ao ler Excel: {exc}")
                     else:
                         rows = list(sheet.iter_rows(values_only=True))
@@ -907,18 +1001,20 @@ def piece_import_view(request):
                                 col for col in IMPORT_COLUMNS if col not in headers
                             ]
                             if missing:
-                                errors.append(
-                                    "Colunas em falta: " + ", ".join(missing)
-                                )
+                                errors.append("Colunas em falta: " + ", ".join(missing))
                             else:
-                                index_map = {name: headers.index(name) for name in IMPORT_COLUMNS}
+                                index_map = {
+                                    name: headers.index(name) for name in IMPORT_COLUMNS
+                                }
                                 for row_number, row in enumerate(rows[1:], start=2):
                                     payload = {}
                                     for key, idx in index_map.items():
-                                        payload[key] = row[idx] if idx < len(row) else None
+                                        payload[key] = (
+                                            row[idx] if idx < len(row) else None
+                                        )
                                     try:
                                         process_payload(payload, row_number)
-                                    except Exception as exc:  # noqa: BLE001
+                                    except Exception as exc:
                                         errors.append(f"Linha {row_number}: {exc}")
 
             if created:
@@ -938,12 +1034,3 @@ def piece_import_view(request):
             "expected_columns": IMPORT_COLUMNS,
         },
     )
-
-
-
-
-
-
-
-
-
