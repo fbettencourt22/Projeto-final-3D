@@ -1,9 +1,9 @@
 <div class="modal fade js-edit-modal" id="inventoryAddModal" tabindex="-1" aria-labelledby="inventoryAddModalLabel" aria-hidden="true"
-     data-edit-fields='["quantity"]'
-     data-edit-id-input="#inventory-add-piece-id" data-edit-title-selector=".modal-title-text"
-     data-edit-default-title="Enviar para inventario"
-     data-open-pk="{{ inventory_add_open_pk|default:'' }}"
-     data-has-errors="{% if inventory_add_form.errors %}true{% else %}false{% endif %}">
+        data-edit-fields='["quantity"]'
+        data-edit-id-input="#inventory-add-piece-id" data-edit-title-selector=".modal-title-text"
+        data-edit-default-title="Enviar para inventario"
+        data-open-pk="{{ inventory_add_open_pk|default:'' }}"
+        data-has-errors="{% if inventory_add_form.errors %}true{% else %}false{% endif %}">
     <div class="modal-dialog">
         <div class="modal-content">
             {% with action_name=inventory_add_action|default:'pieces_list' %}
@@ -12,7 +12,7 @@
                 <input type="hidden" name="action" value="add_to_inventory">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="inventoryAddModalLabel">
-                        <span class="modal-title-text">Enviar para inventario</span>
+                        <span class="modal-title-text">Enviar para inventário</span>
                     </h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
