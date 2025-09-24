@@ -15,7 +15,7 @@
         <div class="tab-content pt-4" id="calcTabsContent">
             <div class="tab-pane fade show active" id="tab-calculadora" role="tabpanel" aria-labelledby="calc-tab">
                 {% if not has_filaments %}
-                    <div class="alert alert-warning mb-3">Adicione pelo menos um filamento no inventario para utilizar a calculadora.</div>
+                    <div class="alert alert-warning mb-3">Adicione pelo menos um filamento no inventário para utilizar a calculadora.</div>
                 {% endif %}
                 <form method="post" novalidate class="row g-3">
                     {% csrf_token %}
@@ -38,9 +38,9 @@
                 {% if result %}
                     <div class="table-responsive mt-4">
                         <table class="table table-striped align-middle">
-                            <caption>Resultado da Ultima peça</caption>
+                            <caption>Resultado da última peça</caption>
                             <tbody>
-                                <tr><th scope="row">Peca</th><td>{{ result.piece_name }}</td></tr>
+                                <tr><th scope="row">Peça</th><td>{{ result.piece_name }}</td></tr>
                                 {% if result.filament_name %}
                                 <tr><th scope="row">Filamento</th><td>{{ result.filament_name }}{% if result.filament_color %} ({{ result.filament_color }}){% endif %}</td></tr>
                                 {% endif %}
@@ -51,10 +51,10 @@
                                 <tr><th scope="row">Energia (kWh)</th><td>{{ result.consumption_kwh }}</td></tr>
                                 <tr><th scope="row">Custo Filamento (EUR)</th><td>{{ result.cost_filament }}</td></tr>
                                 <tr><th scope="row">Custo Energia (EUR)</th><td>{{ result.cost_energy }}</td></tr>
-                                <tr><th scope="row">Custo Mao de Obra (EUR)</th><td>{{ result.cost_labour }}</td></tr>
-                                <tr><th scope="row">Custo Maquina (EUR)</th><td>{{ result.cost_machine }}</td></tr>
+                                <tr><th scope="row">Custo Mão de Obra (EUR)</th><td>{{ result.cost_labour }}</td></tr>
+                                <tr><th scope="row">Custo Máquina (EUR)</th><td>{{ result.cost_machine }}</td></tr>
                                 <tr><th scope="row">Custo Total (EUR)</th><td>{{ result.cost_total }}</td></tr>
-                                <tr><th scope="row">Preco Final (EUR)</th><td class="fw-bold">{{ result.price_final }}</td></tr>
+                                <tr><th scope="row">Preço Final (EUR)</th><td class="fw-bold">{{ result.price_final }}</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -65,7 +65,7 @@
                         <li class="list-group-item">Energia: {{ constants.VALOR_KWH }} EUR/kWh</li>
                         <li class="list-group-item">Consumo impressora: {{ constants.CONSUMO_W }} W</li>
                         <li class="list-group-item">Custo mão de obra: {{ constants.CUSTO_MAO_OBRA }} EUR/hora</li>
-                        <li class="list-group-item">Desperdicio de filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
+                        <li class="list-group-item">Desperdício de filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
                         <li class="list-group-item">Custo máquina: {{ constants.CUSTO_MAQUINA_HORA }} EUR/hora</li>
                     </ul>
                 </div>
@@ -94,13 +94,13 @@
                                     {% if request.user.is_superuser %}
                                         <th>Utilizador</th>
                                     {% endif %}
-                                    <th>AÃ§Ãµes</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for piece in pieces %}
                                     <tr>
-                                        <td>{% if piece.name %}{{ piece.name }}{% else %}PeÃ§a #{{ piece.pk }}{% endif %}</td>
+                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</td>
                                         <td>{{ piece.filament_weight_g }}</td>
                                         <td>{{ piece.print_time_hours }}</td>
                                         <td>{{ piece.margin_percentage }}</td>
@@ -117,7 +117,7 @@
                                         <td>
                                             {% if request.user.is_superuser or piece.user == request.user %}
                                                 <div class="d-flex gap-2">
-                                                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para invent&aacute;rio</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para inventário</button>
                                                     <button type="button" class="btn btn-sm btn-outline-primary piece-edit-trigger" data-bs-toggle="modal" data-bs-target="#pieceEditModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.edit_payload|escape }}">Editar</button>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#pieceDeleteModal" data-delete-url="{% url 'piece_delete' piece.pk %}?next={{ request.get_full_path|urlencode }}" data-delete-label="{{ piece.edit_label|escape }}">Apagar</button>
                                                 </div>
@@ -131,7 +131,7 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">Ainda nÃ£o existem peÃ§as registadas.</div>
+                    <div class="alert alert-info">Ainda não existem peças registadas.</div>
                 {% endif %}
             </div>
         </div>
@@ -139,7 +139,7 @@
 </div>
 {% include "core/includes/piece_edit_modal.html" with piece_edit_action='calculator' %}
 {% include "core/includes/inventory_add_modal.html" with inventory_add_action=inventory_add_action %}
-{% include "core/includes/delete_confirm_modal.html" with modal_id="pieceDeleteModal" modal_title="Apagar pe&ccedil;a" %}
+{% include "core/includes/delete_confirm_modal.html" with modal_id="pieceDeleteModal" modal_title="Apagar peça" %}
 {% endblock %}
 
 {% block extra_js %}
