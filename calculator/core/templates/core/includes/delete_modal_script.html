@@ -1,0 +1,60 @@
+﻿<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined') {
+        return;
+    }
+    var modals = document.querySelectorAll('.js-delete-modal');
+    modals.forEach(function (modalEl) {
+        var form = modalEl.querySelector('form');
+        if (!form) {
+            return;
+        }
+        var titleNode = modalEl.querySelector('.modal-title-text');
+        var labelNode = modalEl.querySelector('.modal-entity-label');
+        var confirmBtn = modalEl.querySelector('[data-delete-confirm]');
+        var defaultAction = form.getAttribute('action') || '';
+        var defaultTitle = titleNode ? titleNode.textContent : '';
+        var defaultConfirm = confirmBtn ? confirmBtn.textContent : '';
+
+        modalEl.addEventListener('show.bs.modal', function (event) {
+            var trigger = event.relatedTarget;
+            if (!trigger) {
+                return;
+            }
+            var action = trigger.getAttribute('data-delete-url') || defaultAction;
+            if (action) {
+                form.setAttribute('action', action);
+            }
+            var label = trigger.getAttribute('data-delete-label') || '';
+            if (labelNode) {
+                labelNode.textContent = label;
+            }
+            if (titleNode) {
+                var customTitle = trigger.getAttribute('data-delete-title');
+                titleNode.textContent = customTitle || defaultTitle;
+            }
+            if (confirmBtn) {
+                var customConfirm = trigger.getAttribute('data-delete-confirm-label');
+                confirmBtn.textContent = customConfirm || defaultConfirm;
+            }
+        });
+
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            if (defaultAction) {
+                form.setAttribute('action', defaultAction);
+            } else {
+                form.removeAttribute('action');
+            }
+            if (labelNode) {
+                labelNode.textContent = '';
+            }
+            if (titleNode) {
+                titleNode.textContent = defaultTitle;
+            }
+            if (confirmBtn) {
+                confirmBtn.textContent = defaultConfirm;
+            }
+        });
+    });
+});
+</script>

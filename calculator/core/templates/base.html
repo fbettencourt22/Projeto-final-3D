@@ -1,33 +1,182 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Projeto 3D{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --navbar-gradient-start: #4e6af3;
+            --navbar-gradient-end: #6a5df1;
+        }
+
+        body {
+            background-color: #f7f9fd;
+        }
+
+        .modern-navbar {
+            background: linear-gradient(135deg, var(--navbar-gradient-start), var(--navbar-gradient-end));
+            padding-block: 0.85rem;
+            box-shadow: 0 0.9rem 1.8rem rgba(8, 18, 63, 0.22);
+            backdrop-filter: blur(14px);
+        }
+
+        .modern-navbar .navbar-brand {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .modern-navbar .brand-icon {
+            width: 3.1rem;
+            height: 3.1rem;
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.45rem;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.15);
+        }
+
+        .modern-navbar .brand-title {
+            font-size: 1.15rem;
+            letter-spacing: 0.01em;
+        }
+
+        .modern-navbar .brand-tagline {
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .modern-navbar .navbar-toggler {
+            border: none;
+            box-shadow: none;
+        }
+
+        .modern-navbar .navbar-toggler:focus {
+            box-shadow: none;
+        }
+
+        .modern-navbar .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            border-radius: 0.9rem;
+            padding: 0.65rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .modern-navbar .navbar-nav .nav-link:hover,
+        .modern-navbar .navbar-nav .nav-link:focus {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.16);
+        }
+
+        .modern-navbar .navbar-nav .nav-link.active {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.22);
+            box-shadow: 0 0.6rem 1.5rem rgba(10, 15, 60, 0.22);
+        }
+
+        .navbar-text {
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.88rem;
+            letter-spacing: 0.04em;
+        }
+
+        .navbar-user-name {
+            color: #ffffff;
+        }
+
+        .btn-glass {
+            background-color: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 0.55rem 1.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-glass:hover,
+        .btn-glass:focus {
+            background-color: rgba(255, 255, 255, 0.24);
+            color: #ffffff;
+            box-shadow: 0 0.6rem 1.6rem rgba(9, 15, 55, 0.2);
+        }
+
+        .navbar-actions {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 1rem;
+        }
+
+        @media (min-width: 992px) {
+            .navbar-actions {
+                border-top: none;
+                padding-top: 0;
+            }
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'dashboard' %}">Gestor de Impressões 3D</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegacao">
+<nav class="navbar navbar-expand-lg navbar-dark modern-navbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-3" href="{% url 'dashboard' %}">
+            <span class="brand-icon">
+                <i class="bi bi-printer-fill"></i>
+            </span>
+            <span class="d-flex flex-column">
+                <span class="brand-title">Gestor de Impress&otilde;es 3D</span>
+                <small class="brand-tagline">Planeamento, c&aacute;lculo e invent&aacute;rio num s&oacute; lugar</small>
+            </span>
+        </a>
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navega&ccedil;&atilde;o">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                {% if request.user.is_authenticated %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Menu principal</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'calculator' %}">Calculadora</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'inventory' %}">Inventario</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'pieces_list' %}">Peças</a></li>
-                {% endif %}
-            </ul>
             {% if request.user.is_authenticated %}
-                <span class="navbar-text me-3">Ola, {{ request.user.get_username }}</span>
-                <a class="btn btn-outline-light" href="{% url 'logout' %}">Terminar sessao</a>
+                {% with current_url=request.resolver_match.url_name %}
+                    <ul class="navbar-nav align-items-lg-center gap-lg-1 me-lg-4 ms-lg-3 mb-3 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link{% if current_url == 'dashboard' %} active{% endif %}" href="{% url 'dashboard' %}">
+                                <i class="bi bi-grid-1x2-fill me-2 d-none d-lg-inline"></i>
+                                Menu principal
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if current_url == 'calculator' %} active{% endif %}" href="{% url 'calculator' %}">
+                                <i class="bi bi-calculator-fill me-2 d-none d-lg-inline"></i>
+                                Calculadora
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if current_url == 'inventory' %} active{% endif %}" href="{% url 'inventory' %}">
+                                <i class="bi bi-box-seam-fill me-2 d-none d-lg-inline"></i>
+                                Invent&aacute;rio
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if current_url == 'pieces_list' %} active{% endif %}" href="{% url 'pieces_list' %}">
+                                <i class="bi bi-layers-fill me-2 d-none d-lg-inline"></i>
+                                Pe&ccedil;as
+                            </a>
+                        </li>
+                    </ul>
+                {% endwith %}
+                <div class="navbar-actions ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+                    <span class="navbar-text text-center text-lg-start">Ol&aacute;, <span class="navbar-user-name">{{ request.user.get_username }}</span></span>
+                    <a class="btn btn-glass" href="{% url 'logout' %}">Terminar sess&atilde;o</a>
+                </div>
             {% else %}
-                <a class="btn btn-outline-light" href="{% url 'login' %}">Entrar</a>
+                {% if request.resolver_match.url_name != 'login' %}
+                    <div class="ms-lg-auto navbar-actions pt-lg-0">
+                        <a class="btn btn-glass" href="{% url 'login' %}">Entrar</a>
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -48,5 +197,3 @@
 {% block extra_js %}{% endblock %}
 </body>
 </html>
-
-

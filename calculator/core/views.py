@@ -1,4 +1,4 @@
-import io
+﻿import io
 import json
 from pathlib import Path
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -72,6 +72,15 @@ def calculate_print_job(data: dict) -> dict:
             Decimal("0.0001"), rounding=ROUND_HALF_UP
         ),
     }
+
+
+def resolve_next_url(request, fallback: str) -> str:
+    candidate = request.GET.get("next") or request.POST.get("next")
+    if candidate and url_has_allowed_host_and_scheme(
+        candidate, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return candidate
+    return fallback
 
 
 def get_piece_initial_data(piece: PrintJob, user) -> dict:
@@ -222,7 +231,7 @@ def normalize_text(value: str) -> str:
 
 
 def parse_decimal(value):
-    """Converte o valor em Decimal, aceitando strings com vArgula."""
+
     if isinstance(value, Decimal):
         return value
     if value is None:
@@ -234,7 +243,7 @@ def parse_decimal(value):
     try:
         return Decimal(value_str)
     except (InvalidOperation, ValueError) as exc:
-        raise ValueError(f"valor invAlido: {value}") from exc
+        raise ValueError(f"valor inválido: {value}") from exc
 
 
 def piece_permission_check(user, piece: PrintJob):
@@ -259,18 +268,18 @@ def dashboard_view(request):
         },
         {
             "url": "pieces_list",
-            "label": "Pe\u00e7as inseridas",
+            "label": "Peças inseridas",
             "description": "Consulte, edite e exporte os seus cálculos anteriores.",
         },
         {
             "url": "piece_import",
-            "label": "Importar pe\u00e7as",
-            "description": "Carregue um ficheiro Excel para criar pe\u00e7as em massa.",
+            "label": "Importar peças",
+            "description": "Carregue um ficheiro Excel para criar peças em massa.",
         },
         {
             "url": "inventory",
             "label": "Inventário",
-            "description": "Gerir filamentos e pe\u00e7as disponíveis.",
+            "description": "Gerir filamentos e peças disponi­veis.",
         },
     ]
     return render(request, "core/dashboard.html", {"links": links})
@@ -340,7 +349,7 @@ def inventory_view(request):
             filament = filament_form.save(commit=False)
             filament.user = request.user
             filament.save()
-            messages.success(request, "Filamento guardado no invent\u00e1rio.")
+            messages.success(request, "Filamento guardado no inventário.")
             return redirect(f"{reverse('inventory')}?tab=filaments")
         active_tab = "filaments"
     elif action == "edit_filament":
@@ -365,7 +374,7 @@ def inventory_view(request):
         if inventory_item_edit_form.is_valid():
             item.quantity = inventory_item_edit_form.cleaned_data["quantity"]
             item.save(update_fields=["quantity", "updated_at"])
-            messages.success(request, "Invent\u00e1rio atualizado.")
+            messages.success(request, "Inventário atualizado.")
             target = get_safe_redirect(request, f"{reverse('inventory')}?tab=pieces")
             return redirect(target)
         inventory_item_edit_open_pk = str(item.pk)
@@ -507,7 +516,7 @@ def inventory_item_delete_view(request, pk):
 
     if request.method == "POST":
         item.delete()
-        messages.success(request, "Pe\u00e7a removida do invent\u00e1rio.")
+        messages.success(request, "Peça removida do inventário.")
         return redirect(f"{reverse('inventory')}?tab=pieces")
 
     return render(
@@ -848,7 +857,7 @@ def piece_export_view(request):
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "Pe\u00e7as"
+    ws.title = "Peças"
     headers = [
         "piece_name",
         "filament_price_per_kg",
@@ -898,9 +907,7 @@ def piece_export_view(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-    response["Content-Disposition"] = (
-        f'attachment; filename="pe\u00e7as_{timestamp}.xlsx"'
-    )
+    response["Content-Disposition"] = f'attachment; filename="peças_{timestamp}.xlsx"'
 
     buffer = io.BytesIO()
     wb.save(buffer)
@@ -913,6 +920,7 @@ def piece_export_view(request):
 def piece_import_view(request):
     form = PieceImportForm()
     errors: list[str] = []
+    warnings: list[str] = []
     created = 0
 
     numeric_fields = [
@@ -924,7 +932,7 @@ def piece_import_view(request):
     ]
 
     def process_payload(raw_payload, line_no):
-        nonlocal created
+        nonlocal created, warnings
         cleaned = {
             "piece_name": (raw_payload.get("piece_name") or "").strip(),
         }
@@ -934,7 +942,8 @@ def piece_import_view(request):
                 user=request.user, name__iexact=piece_name
             )
             if exists_qs.exists():
-                raise ValueError("Ja existe uma pe\u00e7a com este nome.")
+                warnings.append(f"Linha {line_no}: Já existe uma peça com este nome.")
+                return False
         for key in numeric_fields:
             try:
                 cleaned[key] = parse_decimal(raw_payload.get(key))
@@ -963,6 +972,7 @@ def piece_import_view(request):
             consumption_kwh=result["consumption_kwh"],
         )
         created += 1
+        return True
 
     if request.method == "POST":
         form = PieceImportForm(request.POST, request.FILES)
@@ -1013,14 +1023,17 @@ def piece_import_view(request):
                                             row[idx] if idx < len(row) else None
                                         )
                                     try:
-                                        process_payload(payload, row_number)
+                                        processed = process_payload(payload, row_number)
                                     except Exception as exc:
                                         errors.append(f"Linha {row_number}: {exc}")
+                                    else:
+                                        if not processed:
+                                            continue
 
             if created:
                 messages.success(
                     request,
-                    f"Importadas {created} peAa(s) para o seu utilizador.",
+                    f"Importadas {created} peça(s).",
                 )
                 if not errors:
                     return redirect("pieces_list")
@@ -1031,6 +1044,7 @@ def piece_import_view(request):
         {
             "form": form,
             "errors": errors,
+            "warnings": warnings,
             "expected_columns": IMPORT_COLUMNS,
         },
     )

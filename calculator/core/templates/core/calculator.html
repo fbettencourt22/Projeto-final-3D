@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Calculadora{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
@@ -65,7 +65,7 @@
                         <li class="list-group-item">Energia: {{ constants.VALOR_KWH }} EUR/kWh</li>
                         <li class="list-group-item">Consumo impressora: {{ constants.CONSUMO_W }} W</li>
                         <li class="list-group-item">Custo mão de obra: {{ constants.CUSTO_MAO_OBRA }} EUR/hora</li>
-                        <li class="list-group-item">Desperdício de filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
+                        <li class="list-group-item">Desperdicio de filamento: {{ constants.DESPERDICIO_FILAMENTO|floatformat:2 }}</li>
                         <li class="list-group-item">Custo máquina: {{ constants.CUSTO_MAQUINA_HORA }} EUR/hora</li>
                     </ul>
                 </div>
@@ -94,13 +94,13 @@
                                     {% if request.user.is_superuser %}
                                         <th>Utilizador</th>
                                     {% endif %}
-                                    <th>Ações</th>
+                                    <th>AÃ§Ãµes</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for piece in pieces %}
                                     <tr>
-                                        <td>{% if piece.name %}{{ piece.name }}{% else %}Peça #{{ piece.pk }}{% endif %}</td>
+                                        <td>{% if piece.name %}{{ piece.name }}{% else %}PeÃ§a #{{ piece.pk }}{% endif %}</td>
                                         <td>{{ piece.filament_weight_g }}</td>
                                         <td>{{ piece.print_time_hours }}</td>
                                         <td>{{ piece.margin_percentage }}</td>
@@ -119,7 +119,7 @@
                                                 <div class="d-flex gap-2">
                                                     <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para invent&aacute;rio</button>
                                                     <button type="button" class="btn btn-sm btn-outline-primary piece-edit-trigger" data-bs-toggle="modal" data-bs-target="#pieceEditModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.edit_payload|escape }}">Editar</button>
-                                                    <a class="btn btn-sm btn-outline-danger" href="{% url 'piece_delete' piece.pk %}">Apagar</a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#pieceDeleteModal" data-delete-url="{% url 'piece_delete' piece.pk %}?next={{ request.get_full_path|urlencode }}" data-delete-label="{{ piece.edit_label|escape }}">Apagar</button>
                                                 </div>
                                             {% else %}
                                                 <span class="text-muted">-</span>
@@ -131,7 +131,7 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">Ainda não existem peças registadas.</div>
+                    <div class="alert alert-info">Ainda nÃ£o existem peÃ§as registadas.</div>
                 {% endif %}
             </div>
         </div>
@@ -139,8 +139,10 @@
 </div>
 {% include "core/includes/piece_edit_modal.html" with piece_edit_action='calculator' %}
 {% include "core/includes/inventory_add_modal.html" with inventory_add_action=inventory_add_action %}
+{% include "core/includes/delete_confirm_modal.html" with modal_id="pieceDeleteModal" modal_title="Apagar pe&ccedil;a" %}
 {% endblock %}
 
 {% block extra_js %}
     {% include "core/includes/edit_modal_script.html" %}
+    {% include "core/includes/delete_modal_script.html" %}
 {% endblock %}

@@ -3,27 +3,27 @@ from django import forms
 from .models import FilamentType, PrintJob
 
 FILAMENT_TYPE_CHOICES = [
-    ('PLA', 'PLA'),
-    ('PLA+', 'PLA+'),
-    ('PLA Silk', 'PLA Silk'),
-    ('PLA Wood', 'PLA Wood'),
-    ('PLA Metal', 'PLA Metal'),
-    ('PLA Glow', 'PLA Glow'),
-    ('PLA Transparente', 'PLA Transparente'),
-    ('ABS', 'ABS'),
-    ('PETG', 'PETG'),
-    ('TPU / TPE', 'TPU / TPE'),
-    ('Nylon (PA)', 'Nylon (PA)'),
-    ('Carbon Fiber', 'Carbon Fiber'),
-    ('Glass Fiber', 'Glass Fiber'),
-    ('Metal Filled', 'Metal Filled'),
-    ('Wood Filled', 'Wood Filled'),
+    ("PLA", "PLA"),
+    ("PLA+", "PLA+"),
+    ("PLA Silk", "PLA Silk"),
+    ("PLA Wood", "PLA Wood"),
+    ("PLA Metal", "PLA Metal"),
+    ("PLA Glow", "PLA Glow"),
+    ("PLA Transparente", "PLA Transparente"),
+    ("ABS", "ABS"),
+    ("PETG", "PETG"),
+    ("TPU / TPE", "TPU / TPE"),
+    ("Nylon (PA)", "Nylon (PA)"),
+    ("Carbon Fiber", "Carbon Fiber"),
+    ("Glass Fiber", "Glass Fiber"),
+    ("Metal Filled", "Metal Filled"),
+    ("Wood Filled", "Wood Filled"),
 ]
 
 
 class PrintJobForm(forms.Form):
     piece_name = forms.CharField(
-        label="Nome da Pe\u00e7a",
+        label="Nome da Peça",
         max_length=100,
         required=False,
     )
@@ -75,7 +75,9 @@ class PrintJobForm(forms.Form):
 
         if not filament_qs.exists():
             filament_field.empty_label = "Sem filamentos no inventário"
-            filament_field.help_text = "Adicione filamentos no inventário antes de calcular."
+            filament_field.help_text = (
+                "Adicione filamentos no inventário antes de calcular."
+            )
         else:
             selected_value = None
             if self.is_bound:
@@ -87,7 +89,9 @@ class PrintJobForm(forms.Form):
             if selected_value:
                 filament_field.help_text = ""
             else:
-                filament_field.help_text = "Selecione um filamento guardado no inventário."
+                filament_field.help_text = (
+                    "Selecione um filamento guardado no inventário."
+                )
 
         for field in self.fields.values():
             if isinstance(field.widget, forms.Select):
@@ -115,7 +119,7 @@ class PrintJobForm(forms.Form):
         if existing_piece is not None:
             qs = qs.exclude(pk=existing_piece.pk)
         if qs.filter(name__iexact=name).exists():
-            raise forms.ValidationError("Ja existe uma pe\u00e7a com este nome.")
+            raise forms.ValidationError("Ja existe uma peça com este nome.")
         return name
 
     def clean_margin_percentage(self):
@@ -139,39 +143,36 @@ class PieceImportForm(forms.Form):
 
 
 class FilamentTypeForm(forms.ModelForm):
-    name = forms.ChoiceField(choices=FILAMENT_TYPE_CHOICES, label='Tipo')
+    name = forms.ChoiceField(choices=FILAMENT_TYPE_CHOICES, label="Tipo")
 
     class Meta:
         model = FilamentType
-        fields = ['name', 'color', 'price_per_kg', 'weight_kg']
+        fields = ["name", "color", "price_per_kg", "weight_kg"]
         labels = {
-            'color': 'Cor',
-            'price_per_kg': 'Preço (EUR/kg)',
-            'weight_kg': 'Peso (kg)',
+            "color": "Cor",
+            "price_per_kg": "Preço (EUR/kg)",
+            "weight_kg": "Peso (kg)",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['name'].widget.attrs.setdefault('class', 'form-select')
+        self.fields["name"].widget.attrs.setdefault("class", "form-select")
         for field_name, field in self.fields.items():
-            if field_name == 'name':
+            if field_name == "name":
                 continue
-            field.widget.attrs.setdefault('class', 'form-control')
+            field.widget.attrs.setdefault("class", "form-control")
             if isinstance(field.widget, forms.NumberInput):
-                field.widget.attrs.setdefault('step', '0.01')
+                field.widget.attrs.setdefault("step", "0.01")
 
 
 class InventoryQuantityForm(forms.Form):
     quantity = forms.IntegerField(
-        label='Quantidade',
+        label="Quantidade",
         min_value=1,
         initial=1,
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        field = self.fields['quantity']
-        field.widget.attrs.setdefault('class', 'form-control')
-
-
-
+        field = self.fields["quantity"]
+        field.widget.attrs.setdefault("class", "form-control")

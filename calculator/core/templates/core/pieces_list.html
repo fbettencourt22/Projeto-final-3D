@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Listagem de Peças{% endblock %}
 {% block content %}
 <div class="card shadow-sm">
@@ -40,7 +40,7 @@
                             {% if request.user.is_superuser %}
                                 <th>Utilizador</th>
                             {% endif %}
-                            <th>Aç&otilde;es</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -63,9 +63,9 @@
                                 <td>
                                     {% if request.user.is_superuser or piece.user == request.user %}
                                         <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para invent&aacute;rio</button>
+                                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inventoryAddModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.add_payload|escape }}">Enviar para inventário</button>
                                             <button type="button" class="btn btn-sm btn-outline-primary piece-edit-trigger" data-bs-toggle="modal" data-bs-target="#pieceEditModal" data-edit-id="{{ piece.pk }}" data-edit-label="{{ piece.edit_label|default_if_none:''|escape }}" data-edit-payload="{{ piece.edit_payload|escape }}">Editar</button>
-                                            <a class="btn btn-sm btn-outline-danger" href="{% url 'piece_delete' piece.pk %}">Apagar</a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#pieceDeleteModal" data-delete-url="{% url 'piece_delete' piece.pk %}?next={{ request.get_full_path|urlencode }}" data-delete-label="{{ piece.edit_label|escape }}">Apagar</button>
                                         </div>
                                     {% else %}
                                         <span class="text-muted">-</span>
@@ -78,7 +78,7 @@
             </div>
         {% else %}
             {% if search_query %}
-                <div class="alert alert-warning">Nenhuma peça corresponde à; pesquisa.</div>
+                <div class="alert alert-warning">Nenhuma peça corresponde à pesquisa.</div>
             {% else %}
                 <div class="alert alert-info">Ainda não existem peças registadas.</div>
             {% endif %}
@@ -87,8 +87,10 @@
 </div>
 {% include "core/includes/piece_edit_modal.html" with piece_edit_action='pieces_list' %}
 {% include "core/includes/inventory_add_modal.html" with inventory_add_action=inventory_add_action %}
+{% include "core/includes/delete_confirm_modal.html" with modal_id="pieceDeleteModal" modal_title="Apagar peça" %}
 {% endblock %}
 
 {% block extra_js %}
     {% include "core/includes/edit_modal_script.html" %}
+    {% include "core/includes/delete_modal_script.html" %}
 {% endblock %}

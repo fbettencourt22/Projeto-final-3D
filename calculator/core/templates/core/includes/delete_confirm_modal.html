@@ -1,0 +1,18 @@
+﻿<div class="modal fade js-delete-modal" id="{{ modal_id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h1 class="modal-title fs-5"><span class="modal-title-text">{{ modal_title|default:"Confirmar remo&ccedil;&atilde;o" }}</span></h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-body-message mb-0">Tem a certeza que pretende remover <strong class="modal-entity-label"></strong>? Esta a&ccedil;&atilde;o n&atilde;o pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger" data-delete-confirm>{{ confirm_label|default:"Apagar" }}</button>
+            </div>
+        </form>
+    </div>
+</div>

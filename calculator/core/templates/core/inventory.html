@@ -1,7 +1,5 @@
-{% extends "base.html" %}
-{% block title %}Inventário
-
-{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}Inventário{% endblock %}
 {% block content %}
 <div class="card shadow-sm mb-4">
     <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -85,7 +83,7 @@
                                                 <td>
                                                     <div class="d-flex gap-2">
                                                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filamentEditModal" data-edit-id="{{ filament.pk }}" data-edit-label="{{ filament.edit_label|escape }}" data-edit-payload="{{ filament.edit_payload|escape }}">Editar</button>
-                                                        <a class="btn btn-sm btn-outline-danger" href="{% url 'inventory_filament_delete' filament.pk %}">Apagar</a>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#filamentDeleteModal" data-delete-url="{% url 'inventory_filament_delete' filament.pk %}?next={{ request.get_full_path|urlencode }}" data-delete-label="{{ filament.edit_label|escape }}">Apagar</button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -105,7 +103,7 @@
     <div class="tab-pane fade {% if active_tab == 'pieces' %}show active{% endif %}" id="tab-pieces" role="tabpanel">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h2 class="h5">Peças dispon&iacute;veis</h2>
+                <h2 class="h5">Peças disponíveis</h2>
                 <form class="row g-2 align-items-center mb-3" method="get">
                     <input type="hidden" name="tab" value="pieces">
                     <div class="col-sm-6 col-md-4 col-lg-3">
@@ -126,7 +124,7 @@
                                     <th>Peça</th>
                                     <th>Quantidade</th>
                                     <th>Valor (EUR)</th>
-                                    <th>Actualizado</th>
+                                    <th>Atualizado</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
@@ -145,7 +143,7 @@
                                         <td>
                                             <div class="d-flex gap-2">
                                                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#inventoryItemEditModal" data-edit-id="{{ item.pk }}" data-edit-label="{{ item.edit_label|escape }}" data-edit-payload="{{ item.edit_payload|escape }}">Editar</button>
-                                                <a class="btn btn-sm btn-outline-danger" href="{% url 'inventory_item_delete' item.pk %}">Apagar</a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#inventoryItemDeleteModal" data-delete-url="{% url 'inventory_item_delete' item.pk %}?next={{ request.get_full_path|urlencode }}" data-delete-label="{{ item.edit_label|escape }}" data-delete-confirm-label="Remover">Apagar</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -155,7 +153,7 @@
                     </div>
                 {% else %}
                     {% if pieces_search %}
-                        <p class="text-warning mt-3 mb-0">Nenhuma peça corresponde &agrave; pesquisa.</p>
+                        <p class="text-warning mt-3 mb-0">Nenhuma peça corresponde à pesquisa.</p>
                     {% else %}
                         <p class="text-muted mt-3 mb-0">Ainda não existem peças no inventário.</p>
                     {% endif %}
@@ -166,8 +164,11 @@
 </div>
 {% include "core/includes/filament_edit_modal.html" %}
 {% include "core/includes/inventory_item_edit_modal.html" %}
+{% include "core/includes/delete_confirm_modal.html" with modal_id="filamentDeleteModal" modal_title="Apagar filamento" %}
+{% include "core/includes/delete_confirm_modal.html" with modal_id="inventoryItemDeleteModal" modal_title="Remover peça do inventário" confirm_label="Remover" %}
 {% endblock %}
 
 {% block extra_js %}
     {% include "core/includes/edit_modal_script.html" %}
+    {% include "core/includes/delete_modal_script.html" %}
 {% endblock %}
